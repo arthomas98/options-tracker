@@ -38,6 +38,7 @@ export const SPREADSHEET_CONFIG = {
     positions: 'Positions',
     trades: 'Trades',
     legs: 'Legs',
+    tradeHistory: 'TradeHistory',
   },
 
   // Current schema version for migrations

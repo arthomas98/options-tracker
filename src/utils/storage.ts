@@ -1,4 +1,4 @@
-import type { Trade, Position, Portfolio, Service, AppData, MarkSource } from '../types/trade';
+import type { Trade, Position, Portfolio, Service, AppData, MarkSource, TradeStringEntry } from '../types/trade';
 
 const STORAGE_KEY = 'options-tracker-data';
 
@@ -38,6 +38,14 @@ function rehydrateService(data: Service): Service {
   };
 }
 
+function rehydrateTradeHistory(entries: TradeStringEntry[] | undefined): TradeStringEntry[] | undefined {
+  if (!entries) return undefined;
+  return entries.map((entry) => ({
+    ...entry,
+    enteredDate: new Date(entry.enteredDate),
+  }));
+}
+
 export function loadAppData(): AppData {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -46,6 +54,7 @@ export function loadAppData(): AppData {
       return {
         services: data.services.map(rehydrateService),
         appTitle: data.appTitle,
+        tradeHistory: rehydrateTradeHistory(data.tradeHistory),
       };
     }
   } catch (error) {
@@ -271,4 +280,64 @@ export function updatePositionTaxable(
   );
 
   return { ...portfolio, positions: updatedPositions };
+}
+
+export function addTradeHistoryEntry(
+  appData: AppData,
+  serviceId: string,
+  tradeString: string,
+  positionId: number
+): AppData {
+  const newEntry: TradeStringEntry = {
+    id: generateId(),
+    serviceId,
+    tradeString,
+    enteredDate: new Date(),
+    positionId,
+  };
+
+  const currentHistory = appData.tradeHistory || [];
+  return {
+    ...appData,
+    tradeHistory: [...currentHistory, newEntry],
+  };
+}
+
+export function getTradeHistoryForService(
+  appData: AppData,
+  serviceId: string
+): TradeStringEntry[] {
+  if (!appData.tradeHistory) return [];
+  return appData.tradeHistory
+    .filter((entry) => entry.serviceId === serviceId)
+    .sort((a, b) => b.enteredDate.getTime() - a.enteredDate.getTime()); // Most recent first
+}
+
+export function rebuildTradeHistoryFromTrades(appData: AppData): AppData {
+  const tradeHistory: TradeStringEntry[] = [];
+
+  for (const service of appData.services) {
+    for (const position of service.portfolio.positions) {
+      for (const trade of position.trades) {
+        // Only include trades that have a rawInput string
+        if (trade.rawInput && trade.rawInput.trim()) {
+          tradeHistory.push({
+            id: generateId(),
+            serviceId: service.id,
+            tradeString: trade.rawInput,
+            enteredDate: trade.tradeDate,
+            positionId: position.id,
+          });
+        }
+      }
+    }
+  }
+
+  // Sort by date (oldest first, to maintain chronological order in storage)
+  tradeHistory.sort((a, b) => a.enteredDate.getTime() - b.enteredDate.getTime());
+
+  return {
+    ...appData,
+    tradeHistory,
+  };
 }

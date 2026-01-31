@@ -14,6 +14,8 @@ import {
   updatePositionMark,
   updatePositionDates,
   updatePositionTaxable,
+  addTradeHistoryEntry,
+  getTradeHistoryForService,
 } from './utils/storage';
 import {
   getPositionSummary,
@@ -36,7 +38,7 @@ import { SyncStatusIndicator } from './components/SyncStatusIndicator';
 import { MigrationDialog } from './components/MigrationDialog';
 import { AccountSettings } from './components/AccountSettings';
 import { PnLChart } from './components/PnLChart';
-import type { AppData, Service, Portfolio, Position, ClosedPnLByPeriod } from './types/trade';
+import type { AppData, Service, Portfolio, Position, ClosedPnLByPeriod, TradeStringEntry } from './types/trade';
 
 type ViewMode = 'open' | 'closed';
 type Page = 'summary' | 'service';
@@ -256,6 +258,14 @@ function App() {
       <div className="max-w-4xl mx-auto px-6 py-3 flex justify-between items-center">
         <SyncStatusIndicator />
         <div className="flex items-center gap-3">
+          <a
+            href="/Requirements.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            Help
+          </a>
           {isConfigured && !isSignedIn && (
             <button
               onClick={signIn}
@@ -291,9 +301,11 @@ function App() {
         {Header}
         <ServiceDetailPage
           service={selectedService}
+          appData={appData}
           onBack={handleBackToSummary}
           onUpdatePortfolio={handleUpdateSelectedServicePortfolio}
           onRenameService={handleRenameSelectedService}
+          onUpdateAppData={setAppData}
         />
         {showSettings && <AccountSettings onClose={() => setShowSettings(false)} />}
         {showMigration && <MigrationDialog onClose={() => setShowMigration(false)} />}
@@ -591,12 +603,14 @@ function SummaryPage({ appData, onSelectService, onCreateService, onDeleteServic
 
 interface ServiceDetailPageProps {
   service: Service;
+  appData: AppData;
   onBack: () => void;
   onUpdatePortfolio: (portfolio: Portfolio) => void;
   onRenameService: (newName: string) => void;
+  onUpdateAppData: (appData: AppData) => void;
 }
 
-function ServiceDetailPage({ service, onBack, onUpdatePortfolio, onRenameService }: ServiceDetailPageProps) {
+function ServiceDetailPage({ service, appData, onBack, onUpdatePortfolio, onRenameService, onUpdateAppData }: ServiceDetailPageProps) {
   const [portfolio, setPortfolio] = useState<Portfolio>(service.portfolio);
   const [tradeInput, setTradeInput] = useState('');
   const [positionIdInput, setPositionIdInput] = useState('');
@@ -606,6 +620,8 @@ function ServiceDetailPage({ service, onBack, onUpdatePortfolio, onRenameService
   const [expandedPositions, setExpandedPositions] = useState<Set<number>>(new Set());
   const [closedPnLPeriod, setClosedPnLPeriod] = useState<ClosedPnLPeriod>('all');
   const [showClosedStats, setShowClosedStats] = useState(false);
+  const [showTradeHistory, setShowTradeHistory] = useState(false);
+  const [showTradeHelp, setShowTradeHelp] = useState(false);
 
   // Sync portfolio changes back to parent
   useEffect(() => {
@@ -641,6 +657,11 @@ function ServiceDetailPage({ service, onBack, onUpdatePortfolio, onRenameService
 
       const updatedPortfolio = addTradeToPosition(portfolio, trade, positionId);
       setPortfolio(updatedPortfolio);
+
+      // Save to trade history (successful parse)
+      const updatedAppData = addTradeHistoryEntry(appData, service.id, tradeInput.trim(), positionId);
+      onUpdateAppData(updatedAppData);
+
       setTradeInput('');
       setPositionIdInput('');
       setTradeDateInput('');
@@ -840,7 +861,7 @@ function ServiceDetailPage({ service, onBack, onUpdatePortfolio, onRenameService
                 onChange={(e) => setPositionIdInput(e.target.value)}
                 placeholder={`${portfolio.nextPositionId} (new)`}
                 min="1"
-                className="w-20 px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-28 px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <label className="text-xs text-gray-600">Trade Date:</label>
               <input
@@ -855,12 +876,40 @@ function ServiceDetailPage({ service, onBack, onUpdatePortfolio, onRenameService
               >
                 Add Trade
               </button>
+              <button
+                onClick={() => setShowTradeHelp(true)}
+                className="w-6 h-6 text-xs bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 transition-colors font-semibold"
+                title="How to copy trade strings from Thinkorswim"
+              >
+                ?
+              </button>
+              <div className="flex-1" />
+              <button
+                onClick={() => setShowTradeHistory(true)}
+                className="px-4 py-1.5 text-xs bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                title="View trade string history"
+              >
+                History
+              </button>
             </div>
           </div>
           {parseError && (
             <p className="mt-2 text-red-600 text-xs">{parseError}</p>
           )}
         </div>
+
+        {/* Trade History Modal */}
+        {showTradeHistory && (
+          <TradeHistoryModal
+            entries={getTradeHistoryForService(appData, service.id)}
+            onClose={() => setShowTradeHistory(false)}
+          />
+        )}
+
+        {/* Trade Help Modal */}
+        {showTradeHelp && (
+          <TradeHelpModal onClose={() => setShowTradeHelp(false)} />
+        )}
 
         {/* Position Toggle */}
         <div className="flex gap-2 mb-4">
@@ -909,6 +958,147 @@ function ServiceDetailPage({ service, onBack, onUpdatePortfolio, onRenameService
               />
             ))
           )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============== TRADE HELP MODAL ==============
+
+interface TradeHelpModalProps {
+  onClose: () => void;
+}
+
+function TradeHelpModal({ onClose }: TradeHelpModalProps) {
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] flex flex-col">
+        <div className="p-4 border-b flex justify-between items-center">
+          <h2 className="text-lg font-semibold">How to Copy Trade Strings from Thinkorswim</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 text-xl"
+          >
+            ×
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <p className="text-sm text-gray-700">
+            On the Thinkorswim <strong>Activity & Positions</strong> tab, under the <strong>Filled Orders</strong> section,
+            or in the <strong>Account Statement</strong> tab under the <strong>Order History</strong> section,
+            select the icon in the leftmost column of the row:
+          </p>
+
+          <div className="flex justify-center">
+            <img
+              src="/help/tos-icon.png"
+              alt="Thinkorswim order row icon"
+              className="border rounded shadow-sm max-w-full"
+            />
+          </div>
+
+          <p className="text-sm text-gray-700">
+            to get this dialog box:
+          </p>
+
+          <div className="flex justify-center">
+            <img
+              src="/help/tos-dialog.png"
+              alt="Thinkorswim Edit thinkLog Note dialog"
+              className="border rounded shadow-sm max-w-full"
+            />
+          </div>
+
+          <p className="text-sm text-gray-700">
+            Copy from the word <strong>BUY</strong> or <strong>SELL</strong> to the end of the field and paste into the Add Trade field.
+          </p>
+        </div>
+        <div className="p-4 border-t">
+          <button
+            onClick={onClose}
+            className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Got it
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============== TRADE HISTORY MODAL ==============
+
+interface TradeHistoryModalProps {
+  entries: TradeStringEntry[];
+  onClose: () => void;
+}
+
+function TradeHistoryModal({ entries, onClose }: TradeHistoryModalProps) {
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const handleCopy = async (entry: TradeStringEntry) => {
+    try {
+      await navigator.clipboard.writeText(entry.tradeString);
+      setCopiedId(entry.id);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full mx-4 max-h-[80vh] flex flex-col">
+        <div className="p-4 border-b flex justify-between items-center">
+          <h2 className="text-lg font-semibold">Trade String History</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 text-xl"
+          >
+            ×
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-4">
+          {entries.length === 0 ? (
+            <div className="text-center text-gray-500 py-8">
+              No trade history yet. Trade strings will appear here after successful pastes.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {entries.map((entry) => (
+                <div key={entry.id} className="border rounded-lg p-3 hover:bg-gray-50">
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="text-xs text-gray-500">
+                      {entry.enteredDate.toLocaleDateString()} {entry.enteredDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      <span className="ml-2 text-gray-400">Position #{entry.positionId}</span>
+                    </div>
+                    <button
+                      onClick={() => handleCopy(entry)}
+                      className={`px-2 py-1 text-xs rounded transition-colors ${
+                        copiedId === entry.id
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {copiedId === entry.id ? 'Copied!' : 'Copy'}
+                    </button>
+                  </div>
+                  <div className="font-mono text-xs text-gray-700 bg-gray-50 p-2 rounded break-all">
+                    {entry.tradeString}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="p-4 border-t">
+          <button
+            onClick={onClose}
+            className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+          >
+            Close
+          </button>
         </div>
       </div>
     </div>

@@ -13,6 +13,7 @@ import type {
   OrderType,
   LegAction,
   MarkSource,
+  TradeStringEntry,
 } from '../types';
 import { SPREADSHEET_CONFIG } from '../config/google';
 
@@ -69,6 +70,14 @@ export interface LegRow {
   legAction: string; // 'OPEN' | 'CLOSE' | ''
 }
 
+export interface TradeHistoryRow {
+  id: string;
+  serviceId: string;
+  tradeString: string;
+  enteredDate: string; // ISO date string
+  positionId: number;
+}
+
 // ============================================================================
 // Column headers for each sheet
 // ============================================================================
@@ -83,6 +92,7 @@ export const HEADERS = {
     'isGTC', 'tradeDate',
   ],
   legs: ['tradeId', 'legIndex', 'quantity', 'expiration', 'strike', 'optionType', 'legAction'],
+  tradeHistory: ['id', 'serviceId', 'tradeString', 'enteredDate', 'positionId'],
 };
 
 // ============================================================================
@@ -117,6 +127,7 @@ export function appDataToSheetRows(data: AppData): {
   positions: unknown[][];
   trades: unknown[][];
   legs: unknown[][];
+  tradeHistory: unknown[][];
 } {
   const metadata: unknown[][] = [
     HEADERS.metadata,
@@ -129,6 +140,7 @@ export function appDataToSheetRows(data: AppData): {
   const positions: unknown[][] = [HEADERS.positions];
   const trades: unknown[][] = [HEADERS.trades];
   const legs: unknown[][] = [HEADERS.legs];
+  const tradeHistory: unknown[][] = [HEADERS.tradeHistory];
 
   for (const service of data.services) {
     // Service row
@@ -190,7 +202,20 @@ export function appDataToSheetRows(data: AppData): {
     }
   }
 
-  return { metadata, services, positions, trades, legs };
+  // Trade history entries
+  if (data.tradeHistory) {
+    for (const entry of data.tradeHistory) {
+      tradeHistory.push([
+        entry.id,
+        entry.serviceId,
+        entry.tradeString,
+        dateToString(entry.enteredDate),
+        entry.positionId,
+      ]);
+    }
+  }
+
+  return { metadata, services, positions, trades, legs, tradeHistory };
 }
 
 // ============================================================================
@@ -202,7 +227,8 @@ export function sheetRowsToAppData(
   serviceRows: unknown[][],
   positionRows: unknown[][],
   tradeRows: unknown[][],
-  legRows: unknown[][]
+  legRows: unknown[][],
+  tradeHistoryRows?: unknown[][]
 ): AppData {
   // Parse metadata (skip header row)
   const metadata = new Map<string, string>();
@@ -320,9 +346,27 @@ export function sheetRowsToAppData(
     services.push(service);
   }
 
+  // Parse trade history entries
+  const tradeHistory: TradeStringEntry[] = [];
+  if (tradeHistoryRows) {
+    for (let i = 1; i < tradeHistoryRows.length; i++) {
+      const row = tradeHistoryRows[i];
+      if (!row || row.length < 5) continue;
+
+      tradeHistory.push({
+        id: String(row[0]),
+        serviceId: String(row[1]),
+        tradeString: String(row[2]),
+        enteredDate: stringToDate(String(row[3])),
+        positionId: Number(row[4]),
+      });
+    }
+  }
+
   return {
     services,
     appTitle: metadata.get('appTitle') || undefined,
+    tradeHistory: tradeHistory.length > 0 ? tradeHistory : undefined,
   };
 }
 
@@ -359,6 +403,7 @@ export function getEmptySheetData(): {
   positions: unknown[][];
   trades: unknown[][];
   legs: unknown[][];
+  tradeHistory: unknown[][];
 } {
   return {
     metadata: [
@@ -371,5 +416,6 @@ export function getEmptySheetData(): {
     positions: [HEADERS.positions],
     trades: [HEADERS.trades],
     legs: [HEADERS.legs],
+    tradeHistory: [HEADERS.tradeHistory],
   };
 }

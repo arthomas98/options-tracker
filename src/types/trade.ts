@@ -90,6 +90,7 @@ export interface ServiceSummary {
 export interface AppData {
   services: Service[];
   appTitle?: string;
+  tradeHistory?: TradeStringEntry[];
 }
 
 export interface PositionSummary {
@@ -116,4 +117,12 @@ export interface ClosedPnLByPeriod {
   last30: number;
   currentYear: number;
   previousYear: number;
+}
+
+export interface TradeStringEntry {
+  id: string;
+  serviceId: string;
+  tradeString: string;
+  enteredDate: Date;
+  positionId: number;
 }

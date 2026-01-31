@@ -124,6 +124,10 @@ export async function createSpreadsheet(): Promise<SpreadsheetInfo> {
             properties: { title: SHEETS.legs, index: 4 },
             data: [{ startRow: 0, startColumn: 0, rowData: rowsToGridData(emptyData.legs) }],
           },
+          {
+            properties: { title: SHEETS.tradeHistory, index: 5 },
+            data: [{ startRow: 0, startColumn: 0, rowData: rowsToGridData(emptyData.tradeHistory) }],
+          },
         ],
       },
     });
@@ -243,6 +247,7 @@ export async function readAppData(spreadsheetId: string): Promise<AppData> {
       `${SHEETS.positions}!A:K`,
       `${SHEETS.trades}!A:N`,
       `${SHEETS.legs}!A:G`,
+      `${SHEETS.tradeHistory}!A:E`,
     ];
 
     const response = await gapi.client.sheets.spreadsheets.values.batchGet({
@@ -258,8 +263,9 @@ export async function readAppData(spreadsheetId: string): Promise<AppData> {
     const positions = valueRanges[2]?.values || [HEADERS.positions];
     const trades = valueRanges[3]?.values || [HEADERS.trades];
     const legs = valueRanges[4]?.values || [HEADERS.legs];
+    const tradeHistory = valueRanges[5]?.values || [HEADERS.tradeHistory];
 
-    return sheetRowsToAppData(metadata, services, positions, trades, legs);
+    return sheetRowsToAppData(metadata, services, positions, trades, legs, tradeHistory);
   } catch (error) {
     console.error('Error reading app data:', error);
     throw error;
@@ -281,6 +287,7 @@ export async function writeAppData(spreadsheetId: string, data: AppData): Promis
       `${SHEETS.positions}!A:Z`,
       `${SHEETS.trades}!A:Z`,
       `${SHEETS.legs}!A:Z`,
+      `${SHEETS.tradeHistory}!A:Z`,
     ];
 
     // Clear sheets (batch clear not available, do sequentially)
@@ -298,6 +305,7 @@ export async function writeAppData(spreadsheetId: string, data: AppData): Promis
       { range: `${SHEETS.positions}!A1`, values: sheetData.positions },
       { range: `${SHEETS.trades}!A1`, values: sheetData.trades },
       { range: `${SHEETS.legs}!A1`, values: sheetData.legs },
+      { range: `${SHEETS.tradeHistory}!A1`, values: sheetData.tradeHistory },
     ];
 
     await gapi.client.sheets.spreadsheets.values.batchUpdate({

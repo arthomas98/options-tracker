@@ -4,7 +4,7 @@
 import { useState, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useStorage } from '../contexts/StorageContext';
-import { loadAppData, saveAppData } from '../utils/storage';
+import { loadAppData, saveAppData, rebuildTradeHistoryFromTrades } from '../utils/storage';
 
 interface AccountSettingsProps {
   onClose: () => void;
@@ -365,6 +365,38 @@ export function AccountSettings({ onClose }: AccountSettingsProps) {
                 className="hidden"
               />
             </div>
+          </div>
+
+          {/* Trade History Rebuild Section */}
+          <hr className="border-gray-700" />
+
+          <div>
+            <h3 className="text-sm font-medium text-gray-300 mb-2">Trade History</h3>
+            <p className="text-xs text-gray-400 mb-3">
+              Rebuild trade string history from existing trades. Use this once to populate history from trades entered before this feature existed.
+            </p>
+            <button
+              onClick={() => {
+                const data = loadAppData();
+                const tradeCount = data.services.reduce(
+                  (sum, s) => sum + s.portfolio.positions.reduce(
+                    (psum, p) => psum + p.trades.length, 0
+                  ), 0
+                );
+                const confirmed = confirm(
+                  `Rebuild trade history from ${tradeCount} existing trades?\n\nThis will replace any current trade history.`
+                );
+                if (confirmed) {
+                  const updated = rebuildTradeHistoryFromTrades(data);
+                  saveAppData(updated);
+                  updateAppData(updated);
+                  setSuccess(`Trade history rebuilt from ${updated.tradeHistory?.length || 0} trades`);
+                }
+              }}
+              className="w-full px-3 py-2 text-sm bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
+            >
+              Rebuild Trade History
+            </button>
           </div>
 
           {/* Info Section */}
