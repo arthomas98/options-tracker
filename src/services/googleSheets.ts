@@ -244,7 +244,7 @@ export async function readAppData(spreadsheetId: string): Promise<AppData> {
     const ranges = [
       `${SHEETS.metadata}!A:B`,
       `${SHEETS.services}!A:D`,
-      `${SHEETS.positions}!A:K`,
+      `${SHEETS.positions}!A:L`,
       `${SHEETS.trades}!A:N`,
       `${SHEETS.legs}!A:G`,
       `${SHEETS.tradeHistory}!A:E`,

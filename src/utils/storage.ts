@@ -418,6 +418,20 @@ export function getTradeHistoryForService(
     .sort((a, b) => b.enteredDate.getTime() - a.enteredDate.getTime()); // Most recent first
 }
 
+export function updatePositionSchwabAccount(
+  portfolio: Portfolio,
+  positionId: number,
+  schwabAccountId: string | undefined
+): Portfolio {
+  const updatedPositions = portfolio.positions.map((pos) =>
+    pos.id === positionId
+      ? { ...pos, schwabAccountId }
+      : pos
+  );
+
+  return { ...portfolio, positions: updatedPositions };
+}
+
 export function rebuildTradeHistoryFromTrades(appData: AppData): AppData {
   const tradeHistory: TradeStringEntry[] = [];
 

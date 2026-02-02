@@ -14,6 +14,7 @@ import {
   updatePositionMark,
   updatePositionDates,
   updatePositionTaxable,
+  updatePositionSchwabAccount,
   addTradeHistoryEntry,
   getTradeHistoryForService,
   movePosition,
@@ -35,6 +36,7 @@ import {
 } from './utils/calculations';
 import { useStorage } from './contexts/StorageContext';
 import { useAuth } from './contexts/AuthContext';
+import { useSchwab } from './contexts/SchwabContext';
 import { SyncStatusIndicator } from './components/SyncStatusIndicator';
 import { MigrationDialog } from './components/MigrationDialog';
 import { AccountSettings } from './components/AccountSettings';
@@ -603,6 +605,49 @@ function SummaryPage({ appData, onSelectService, onCreateService, onDeleteServic
   );
 }
 
+// ============== SCHWAB REFRESH BUTTON ==============
+
+function SchwabRefreshButton() {
+  const { isEnabled, isSignedIn, isRefreshing, lastRefresh, refreshAllPositions } = useSchwab();
+
+  if (!isEnabled || !isSignedIn) {
+    return null;
+  }
+
+  const formatLastRefresh = () => {
+    if (!lastRefresh) return 'Never';
+    const mins = Math.floor((Date.now() - lastRefresh.getTime()) / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins === 1) return '1 min ago';
+    return `${mins} min ago`;
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <button
+        onClick={() => refreshAllPositions()}
+        disabled={isRefreshing}
+        className="px-3 py-1.5 text-xs bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors disabled:opacity-50 flex items-center gap-1"
+      >
+        {isRefreshing ? (
+          <>
+            <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+            Refreshing...
+          </>
+        ) : (
+          'Refresh from Schwab'
+        )}
+      </button>
+      <span className="text-xs text-gray-400">
+        {formatLastRefresh()}
+      </span>
+    </div>
+  );
+}
+
 // ============== SERVICE DETAIL PAGE ==============
 
 interface ServiceDetailPageProps {
@@ -737,6 +782,10 @@ function ServiceDetailPage({ service, appData, onBack, onUpdatePortfolio, onRena
     });
   };
 
+  const handleUpdateSchwabAccount = (positionId: number, schwabAccountId: string | undefined) => {
+    setPortfolio(updatePositionSchwabAccount(portfolio, positionId, schwabAccountId));
+  };
+
   // Services available to move positions to (excluding current service)
   const otherServices = appData.services.filter((s) => s.id !== service.id);
 
@@ -767,6 +816,8 @@ function ServiceDetailPage({ service, appData, onBack, onUpdatePortfolio, onRena
               onSave={onRenameService}
             />
           </h1>
+          <div className="flex-1" />
+          <SchwabRefreshButton />
         </div>
 
         {/* Portfolio Summary */}
@@ -974,6 +1025,7 @@ function ServiceDetailPage({ service, appData, onBack, onUpdatePortfolio, onRena
                 onUpdateMark={(markPrice) => handleUpdateMark(position.id, markPrice)}
                 onUpdateDates={(openDate, closeDate) => handleUpdateDates(position.id, openDate, closeDate)}
                 onUpdateTaxable={(isTaxable) => handleUpdateTaxable(position.id, isTaxable)}
+                onUpdateSchwabAccount={(schwabAccountId) => handleUpdateSchwabAccount(position.id, schwabAccountId)}
               />
             ))
           )}
@@ -1139,6 +1191,7 @@ interface PositionCardProps {
   onUpdateMark: (markPrice: number | undefined) => void;
   onUpdateDates: (openDate?: Date, closeDate?: Date) => void;
   onUpdateTaxable: (isTaxable: boolean) => void;
+  onUpdateSchwabAccount: (schwabAccountId: string | undefined) => void;
 }
 
 // Helper to aggregate legs across all trades in a position
@@ -1197,6 +1250,7 @@ function PositionCard({
   onUpdateMark,
   onUpdateDates,
   onUpdateTaxable,
+  onUpdateSchwabAccount,
 }: PositionCardProps) {
   const summary = getPositionSummary(position);
   const markInfo = getMarkInfo(position);
@@ -1210,6 +1264,18 @@ function PositionCard({
   const [isEditingCloseDate, setIsEditingCloseDate] = useState(false);
   const [openDateInput, setOpenDateInput] = useState('');
   const [closeDateEditInput, setCloseDateEditInput] = useState('');
+
+  // Schwab integration - use cached data
+  const { isEnabled: schwabEnabled, isSignedIn: schwabSignedIn, accounts: schwabAccounts, getNetLiqForPosition, lastRefresh } = useSchwab();
+
+  // Get Net Liq from cache (instant, no API call)
+  const schwabResult = position.isOpen && position.schwabAccountId
+    ? getNetLiqForPosition(position)
+    : null;
+  const schwabNetLiq = schwabResult?.netLiq ?? null;
+  const schwabMatchInfo = schwabResult
+    ? `${schwabResult.matchedLegs}/${schwabResult.totalLegs} legs`
+    : null;
 
   // Check if all expirations are in the past (for open positions)
   const isExpired = position.isOpen && summary.daysToExpiration < 0;
@@ -1377,6 +1443,45 @@ function PositionCard({
               )
             )}
             </div>
+
+            {/* Schwab Net Liq Section */}
+            {position.isOpen && (
+              <div className="flex items-center gap-2 ml-2 px-2 py-1 bg-gray-100 rounded" onClick={(e) => e.stopPropagation()}>
+                <span className="text-xs text-gray-600">Schwab:</span>
+                {schwabEnabled && schwabSignedIn ? (
+                  <>
+                    <select
+                      value={position.schwabAccountId || ''}
+                      onChange={(e) => onUpdateSchwabAccount(e.target.value || undefined)}
+                      className="px-1 py-0.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+                    >
+                      <option value="">Select Account</option>
+                      {schwabAccounts.map((account) => (
+                        <option key={account.accountId} value={account.accountId}>
+                          {account.displayName}
+                        </option>
+                      ))}
+                    </select>
+                    {position.schwabAccountId && (
+                      <>
+                        <span className={`text-xs font-medium ${schwabNetLiq !== null ? (schwabNetLiq >= 0 ? 'text-green-600' : 'text-red-600') : 'text-gray-400'}`}>
+                          {schwabNetLiq !== null ? formatCurrency(schwabNetLiq) : (lastRefresh ? '--' : 'Click Refresh')}
+                        </span>
+                        {schwabMatchInfo && (
+                          <span className="text-xs text-gray-400" title="Matched legs">
+                            ({schwabMatchInfo})
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <span className="text-xs text-gray-400 italic">
+                    {schwabEnabled ? 'Sign in to Schwab' : 'Not enabled'}
+                  </span>
+                )}
+              </div>
+            )}
             <div className="ml-auto text-xs text-gray-500 text-right">
               {position.openDate && (
                 <div className="flex items-center justify-end gap-1">
@@ -1563,7 +1668,9 @@ function PositionCard({
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        setMarkInputValue(markInfo.markValue?.toString() || '');
+                        // Pre-populate with Schwab Net Liq if available, otherwise use existing mark
+                        const defaultValue = schwabNetLiq !== null ? schwabNetLiq.toString() : (markInfo.markValue?.toString() || '');
+                        setMarkInputValue(defaultValue);
                         setIsEditingMark(true);
                       }}
                       className="px-2 py-0.5 text-xs bg-gray-200 text-gray-700 rounded hover:bg-gray-300"

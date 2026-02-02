@@ -63,6 +63,8 @@ export interface Position {
   markSource?: MarkSource;  // How the mark was obtained
   // Tax tracking
   isTaxable?: boolean;      // Whether P&L is taxable (default true)
+  // Schwab integration
+  schwabAccountId?: string; // Which Schwab account this position is in
 }
 
 export interface Portfolio {
@@ -125,4 +127,32 @@ export interface TradeStringEntry {
   tradeString: string;
   enteredDate: Date;
   positionId: number;
+}
+
+// Schwab Integration Types
+export interface SchwabAccount {
+  accountId: string;
+  accountNumber: string;  // Masked account number for display (e.g., "****1234")
+  displayName: string;    // User-friendly name
+}
+
+export interface SchwabSettings {
+  enabled: boolean;
+  accounts: SchwabAccount[];
+}
+
+export interface SchwabPositionLeg {
+  symbol: string;
+  quantity: number;
+  marketValue: number;
+  optionType?: 'CALL' | 'PUT';
+  strikePrice?: number;
+  expirationDate?: string;
+}
+
+export interface SchwabNetLiqResult {
+  netLiq: number;
+  timestamp: Date;
+  matchedLegs: number;
+  totalLegs: number;
 }

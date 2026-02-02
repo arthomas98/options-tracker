@@ -4,6 +4,8 @@
 import { useState, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useStorage } from '../contexts/StorageContext';
+import { useSchwab } from '../contexts/SchwabContext';
+import { isConfigured as isSchwabConfigured } from '../services/schwabApi';
 import { loadAppData, saveAppData, rebuildTradeHistoryFromTrades } from '../utils/storage';
 
 interface AccountSettingsProps {
@@ -21,6 +23,18 @@ export function AccountSettings({ onClose }: AccountSettingsProps) {
     refreshFromCloud,
     updateAppData,
   } = useStorage();
+
+  const {
+    isEnabled: schwabEnabled,
+    isSignedIn: schwabSignedIn,
+    isLoading: schwabLoading,
+    authError: schwabAuthError,
+    accounts: schwabAccounts,
+    enable: enableSchwab,
+    disable: disableSchwab,
+    signIn: schwabSignIn,
+    signOut: schwabSignOut,
+  } = useSchwab();
 
   const [isActionPending, setIsActionPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -397,6 +411,114 @@ export function AccountSettings({ onClose }: AccountSettingsProps) {
             >
               Rebuild Trade History
             </button>
+          </div>
+
+          {/* Schwab Integration Section */}
+          <hr className="border-gray-700" />
+
+          <div>
+            <h3 className="text-sm font-medium text-gray-300 mb-2">Schwab Integration</h3>
+            <p className="text-xs text-gray-400 mb-3">
+              Connect to Schwab to automatically fetch Net Liquidation values for your positions.
+            </p>
+
+            {/* Schwab Configuration Warning */}
+            {!isSchwabConfigured() && (
+              <div className="bg-yellow-900/50 border border-yellow-700 rounded-lg p-3 mb-3">
+                <p className="text-sm text-yellow-300">
+                  Schwab API is not configured. Set VITE_SCHWAB_CLIENT_ID in your environment to enable Schwab integration.
+                </p>
+              </div>
+            )}
+
+            {/* Schwab Auth Error */}
+            {schwabAuthError && (
+              <div className="bg-red-900/50 border border-red-700 rounded-lg p-3 mb-3">
+                <p className="text-sm text-red-300">{schwabAuthError}</p>
+              </div>
+            )}
+
+            {!schwabEnabled ? (
+              <button
+                onClick={() => {
+                  enableSchwab();
+                  setSuccess('Schwab integration enabled. Sign in to connect your accounts.');
+                }}
+                className="w-full px-3 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                Enable Schwab Integration
+              </button>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="text-white text-sm">Schwab Enabled</span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      disableSchwab();
+                      setSuccess('Schwab integration disabled.');
+                    }}
+                    className="px-3 py-1.5 text-sm text-gray-300 hover:text-white hover:bg-gray-600 rounded transition-colors"
+                  >
+                    Disable
+                  </button>
+                </div>
+
+                {schwabLoading ? (
+                  <div className="flex items-center gap-2 text-gray-400">
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Loading...
+                  </div>
+                ) : schwabSignedIn ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-300">Connected Accounts:</span>
+                      <button
+                        onClick={() => {
+                          schwabSignOut();
+                          setSuccess('Signed out of Schwab.');
+                        }}
+                        className="text-xs text-gray-400 hover:text-white"
+                      >
+                        Sign Out
+                      </button>
+                    </div>
+                    <div className="bg-gray-700 rounded-lg p-2 space-y-1">
+                      {schwabAccounts.map((account) => (
+                        <div key={account.accountId} className="flex items-center justify-between text-sm">
+                          <span className="text-white">{account.displayName}</span>
+                          <span className="text-gray-400 text-xs">{account.accountNumber}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={async () => {
+                      setError(null);
+                      await schwabSignIn();
+                      // Note: signIn() redirects to Schwab, so the success message won't show
+                      // The callback handler will complete the flow
+                    }}
+                    disabled={isActionPending || schwabLoading || !isSchwabConfigured()}
+                    className="w-full px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Sign in to Schwab
+                  </button>
+                )}
+
+                <p className="text-xs text-gray-500">
+                  Schwab integration uses OAuth to securely connect to your accounts. Your credentials are never stored by this app.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Info Section */}

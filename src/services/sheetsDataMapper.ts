@@ -85,7 +85,7 @@ export interface TradeHistoryRow {
 export const HEADERS = {
   metadata: ['key', 'value'],
   services: ['id', 'name', 'createdAt', 'nextPositionId'],
-  positions: ['id', 'serviceId', 'symbol', 'structure', 'isOpen', 'openDate', 'closeDate', 'markValue', 'markDate', 'markSource', 'isTaxable'],
+  positions: ['id', 'serviceId', 'symbol', 'structure', 'isOpen', 'openDate', 'closeDate', 'markValue', 'markDate', 'markSource', 'isTaxable', 'schwabAccountId'],
   trades: [
     'id', 'positionId', 'serviceId', 'rawInput', 'action', 'totalQuantity',
     'symbol', 'multiplier', 'isWeekly', 'spreadType', 'price', 'orderType',
@@ -165,6 +165,7 @@ export function appDataToSheetRows(data: AppData): {
         dateToString(position.markDate),
         position.markSource ?? '',
         boolToString(position.isTaxable === true), // Default to false
+        position.schwabAccountId ?? '',
       ]);
 
       // Trades for this position
@@ -348,6 +349,7 @@ export function sheetRowsToAppData(
       markDate: row[8] ? stringToDate(String(row[8])) : undefined,
       markSource: row[9] ? (row[9] as MarkSource) : undefined,
       isTaxable: row[10] !== undefined && row[10] !== '' ? stringToBool(String(row[10])) : false, // Default to false
+      schwabAccountId: row[11] ? String(row[11]) : undefined,
     };
 
     if (!positionsByServiceId.has(serviceId)) {
