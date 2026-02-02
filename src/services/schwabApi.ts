@@ -326,10 +326,12 @@ export async function getAccounts(): Promise<SchwabAccount[]> {
     // Get account details
     try {
       const accountResponse = await apiRequest<SchwabAccountResponse>(`/accounts/${acct.hashValue}`);
+      const lastFour = acct.accountNumber.slice(-4);
+      const accountType = accountResponse.securitiesAccount.type || 'Account';
       accounts.push({
         accountId: acct.hashValue,
-        accountNumber: `****${acct.accountNumber.slice(-4)}`,
-        displayName: accountResponse.securitiesAccount.type || 'Account',
+        accountNumber: `****${lastFour}`,
+        displayName: `${accountType} ****${lastFour}`,
       });
     } catch (error) {
       console.error(`Failed to fetch account ${acct.accountNumber}:`, error);
