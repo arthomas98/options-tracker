@@ -9,24 +9,56 @@ function generateId(): string {
 function rehydratePortfolio(data: Portfolio): Portfolio {
   return {
     ...data,
-    positions: data.positions.map((pos: Position) => ({
-      ...pos,
-      openDate: new Date(pos.openDate),
-      closeDate: pos.closeDate ? new Date(pos.closeDate) : undefined,
-      markDate: pos.markDate ? new Date(pos.markDate) : undefined,
-      // Support both old markPrice and new markValue during migration
-      markValue: pos.markValue ?? pos.markPrice,
-      // Default isTaxable to false
-      isTaxable: pos.isTaxable === true,
-      trades: pos.trades.map((trade: Trade) => ({
+    positions: data.positions.map((pos: Position) => {
+      // Rehydrate trades first so we can use dates for inference
+      const trades = pos.trades.map((trade: Trade) => ({
         ...trade,
         tradeDate: new Date(trade.tradeDate),
         legs: trade.legs.map((leg) => ({
           ...leg,
           expiration: new Date(leg.expiration),
         })),
-      })),
-    })),
+      }));
+
+      let closeDate = pos.closeDate ? new Date(pos.closeDate) : undefined;
+
+      // If position is closed but has no close date, infer one
+      if (!pos.isOpen && !closeDate && trades.length > 0) {
+        const today = new Date();
+
+        // Find the latest expiration date from all legs
+        let latestExpiration: Date | null = null;
+        for (const trade of trades) {
+          for (const leg of trade.legs) {
+            if (!latestExpiration || leg.expiration > latestExpiration) {
+              latestExpiration = leg.expiration;
+            }
+          }
+        }
+
+        // If expiration is in the past, use it; otherwise use last trade date
+        if (latestExpiration && latestExpiration < today) {
+          closeDate = latestExpiration;
+        } else {
+          const mostRecentTrade = trades.reduce((latest, trade) =>
+            trade.tradeDate > latest.tradeDate ? trade : latest
+          );
+          closeDate = mostRecentTrade.tradeDate;
+        }
+      }
+
+      return {
+        ...pos,
+        openDate: new Date(pos.openDate),
+        closeDate,
+        markDate: pos.markDate ? new Date(pos.markDate) : undefined,
+        // Support both old markPrice and new markValue during migration
+        markValue: pos.markValue ?? pos.markPrice,
+        // Default isTaxable to false
+        isTaxable: pos.isTaxable === true,
+        trades,
+      };
+    }),
   };
 }
 

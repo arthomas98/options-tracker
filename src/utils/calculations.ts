@@ -36,9 +36,12 @@ function isDateInRange(date: Date | undefined, start: Date, end: Date): boolean 
 export function calculateClosedPnLForPeriod(positions: Position[], period: TimePeriod): number {
   const { start, end } = getDateRangeForPeriod(period);
 
-  const closedInPeriod = positions.filter(
-    (p) => !p.isOpen && isDateInRange(p.closeDate, start, end)
-  );
+  const closedInPeriod = positions.filter((p) => {
+    if (p.isOpen) return false;
+    // For 'all' period, include closed positions even without valid close dates
+    if (period === 'all') return true;
+    return isDateInRange(p.closeDate, start, end);
+  });
 
   return closedInPeriod.reduce(
     (total, pos) => total + calculatePositionPnL(pos),

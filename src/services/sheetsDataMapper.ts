@@ -307,14 +307,43 @@ export function sheetRowsToAppData(
     const serviceId = String(row[1]);
     const key = `${serviceId}:${positionId}`;
 
+    const trades = tradesByPositionKey.get(key) || [];
+    const isOpen = stringToBool(String(row[4]));
+    let closeDate = row[6] ? stringToDate(String(row[6])) : undefined;
+
+    // If position is closed but has no close date, infer one
+    if (!isOpen && !closeDate && trades.length > 0) {
+      const today = new Date();
+
+      // Find the latest expiration date from all legs
+      let latestExpiration: Date | null = null;
+      for (const trade of trades) {
+        for (const leg of trade.legs) {
+          if (!latestExpiration || leg.expiration > latestExpiration) {
+            latestExpiration = leg.expiration;
+          }
+        }
+      }
+
+      // If expiration is in the past, use it; otherwise use last trade date
+      if (latestExpiration && latestExpiration < today) {
+        closeDate = latestExpiration;
+      } else {
+        const mostRecentTrade = trades.reduce((latest, trade) =>
+          trade.tradeDate > latest.tradeDate ? trade : latest
+        );
+        closeDate = mostRecentTrade.tradeDate;
+      }
+    }
+
     const position: Position = {
       id: positionId,
       symbol: String(row[2]),
       structure: row[3] as SpreadType,
-      isOpen: stringToBool(String(row[4])),
+      isOpen,
       openDate: stringToDate(String(row[5])),
-      closeDate: row[6] ? stringToDate(String(row[6])) : undefined,
-      trades: tradesByPositionKey.get(key) || [],
+      closeDate,
+      trades,
       markValue: row[7] !== undefined && row[7] !== '' ? Number(row[7]) : undefined,
       markDate: row[8] ? stringToDate(String(row[8])) : undefined,
       markSource: row[9] ? (row[9] as MarkSource) : undefined,
