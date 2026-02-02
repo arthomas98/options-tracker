@@ -188,8 +188,9 @@ export function AccountSettings({ onClose }: AccountSettingsProps) {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-800 rounded-lg max-w-md w-full p-6 shadow-xl">
-        <div className="flex justify-between items-center mb-6">
+      <div className="bg-gray-800 rounded-lg max-w-4xl w-full shadow-xl max-h-[90vh] flex flex-col">
+        {/* Sticky Header */}
+        <div className="flex justify-between items-center p-4 border-b border-gray-700 sticky top-0 bg-gray-800 rounded-t-lg">
           <h2 className="text-xl font-semibold text-white">Account Settings</h2>
           <button
             onClick={onClose}
@@ -201,30 +202,34 @@ export function AccountSettings({ onClose }: AccountSettingsProps) {
           </button>
         </div>
 
-        {/* Google Configuration Warning */}
-        {!isConfigured && (
-          <div className="bg-yellow-900/50 border border-yellow-700 rounded-lg p-4 mb-4">
-            <p className="text-sm text-yellow-300">
-              Google OAuth is not configured. Set VITE_GOOGLE_CLIENT_ID in your environment to enable cloud sync.
-            </p>
-          </div>
-        )}
+        {/* Scrollable Content */}
+        <div className="p-6 overflow-y-auto">
+          {/* Google Configuration Warning */}
+          {!isConfigured && (
+            <div className="bg-yellow-900/50 border border-yellow-700 rounded-lg p-4 mb-4">
+              <p className="text-sm text-yellow-300">
+                Google OAuth is not configured. Set VITE_GOOGLE_CLIENT_ID in your environment to enable cloud sync.
+              </p>
+            </div>
+          )}
 
-        {/* Status Messages */}
-        {error && (
-          <div className="bg-red-900/50 border border-red-700 rounded-lg p-3 mb-4">
-            <p className="text-sm text-red-300">{error}</p>
-          </div>
-        )}
+          {/* Status Messages */}
+          {error && (
+            <div className="bg-red-900/50 border border-red-700 rounded-lg p-3 mb-4">
+              <p className="text-sm text-red-300">{error}</p>
+            </div>
+          )}
 
-        {success && (
-          <div className="bg-green-900/50 border border-green-700 rounded-lg p-3 mb-4">
-            <p className="text-sm text-green-300">{success}</p>
-          </div>
-        )}
+          {success && (
+            <div className="bg-green-900/50 border border-green-700 rounded-lg p-3 mb-4">
+              <p className="text-sm text-green-300">{success}</p>
+            </div>
+          )}
 
-        {/* Account Section */}
-        <div className="space-y-4">
+          {/* Two Column Layout */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Left Column */}
+            <div className="space-y-4">
           <div>
             <h3 className="text-sm font-medium text-gray-300 mb-2">Google Account</h3>
 
@@ -384,10 +389,10 @@ export function AccountSettings({ onClose }: AccountSettingsProps) {
               />
             </div>
           </div>
+            </div>
 
-          {/* Trade History Rebuild Section */}
-          <hr className="border-gray-700" />
-
+            {/* Right Column */}
+            <div className="space-y-4">
           <div>
             <h3 className="text-sm font-medium text-gray-300 mb-2">Trade History</h3>
             <p className="text-xs text-gray-400 mb-3">
@@ -418,9 +423,7 @@ export function AccountSettings({ onClose }: AccountSettingsProps) {
           </div>
 
           {/* Schwab Integration Section */}
-          <hr className="border-gray-700" />
-
-          <div>
+          <div className="pt-4 border-t border-gray-700">
             <h3 className="text-sm font-medium text-gray-300 mb-2">Schwab Integration</h3>
             <p className="text-xs text-gray-400 mb-3">
               Connect to Schwab to automatically fetch Net Liquidation values for your positions.
@@ -576,15 +579,15 @@ export function AccountSettings({ onClose }: AccountSettingsProps) {
           </div>
 
           {/* Info Section */}
-          <hr className="border-gray-700" />
-
-          <div className="text-xs text-gray-500">
+          <div className="text-xs text-gray-500 pt-4 border-t border-gray-700">
             <p className="mb-1">
               Your data is always stored locally in your browser. Cloud sync is optional and creates a backup in your Google Drive.
             </p>
             <p>
               Data remains private - only you can access it with your Google account.
             </p>
+          </div>
+            </div>
           </div>
         </div>
       </div>
