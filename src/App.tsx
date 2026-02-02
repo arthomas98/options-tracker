@@ -1334,47 +1334,49 @@ function PositionCard({
                 Reopen
               </button>
             )}
-            <button
-              onClick={(e) => { e.stopPropagation(); onDelete(); }}
-              className="px-2 py-0.5 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200"
-            >
-              Delete
-            </button>
-            {otherServices.length > 0 && (
-              isMoving ? (
-                <div className="flex items-center gap-1">
-                  <select
-                    onClick={(e) => e.stopPropagation()}
-                    onChange={(e) => {
-                      if (e.target.value) {
-                        onMove(e.target.value);
-                        setIsMoving(false);
-                      }
-                    }}
-                    className="px-1 py-0.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    defaultValue=""
-                  >
-                    <option value="" disabled>Select service...</option>
-                    {otherServices.map((s) => (
-                      <option key={s.id} value={s.id}>{s.name}</option>
-                    ))}
-                  </select>
+            <div className="flex gap-1 ml-4">
+              <button
+                onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                className="px-2 py-0.5 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200"
+              >
+                Delete
+              </button>
+              {otherServices.length > 0 && (
+                isMoving ? (
+                  <div className="flex items-center gap-1">
+                    <select
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          onMove(e.target.value);
+                          setIsMoving(false);
+                        }
+                      }}
+                      className="px-1 py-0.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      defaultValue=""
+                    >
+                      <option value="" disabled>Select service...</option>
+                      {otherServices.map((s) => (
+                        <option key={s.id} value={s.id}>{s.name}</option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setIsMoving(false); }}
+                      className="px-1.5 py-0.5 text-xs bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
                   <button
-                    onClick={(e) => { e.stopPropagation(); setIsMoving(false); }}
-                    className="px-1.5 py-0.5 text-xs bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+                    onClick={(e) => { e.stopPropagation(); setIsMoving(true); }}
+                    className="px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
                   >
-                    Cancel
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={(e) => { e.stopPropagation(); setIsMoving(true); }}
-                  className="px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
-                >
-                  Move
+                    Move
                 </button>
               )
             )}
+            </div>
             <div className="ml-auto text-xs text-gray-500 text-right">
               {position.openDate && (
                 <div className="flex items-center justify-end gap-1">
