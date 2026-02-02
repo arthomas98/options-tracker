@@ -238,6 +238,79 @@ export function deletePosition(portfolio: Portfolio, positionId: number): Portfo
   };
 }
 
+export function movePosition(
+  appData: AppData,
+  positionId: number,
+  fromServiceId: string,
+  toServiceId: string
+): AppData {
+  const fromService = appData.services.find((s) => s.id === fromServiceId);
+  const toService = appData.services.find((s) => s.id === toServiceId);
+
+  if (!fromService || !toService || fromServiceId === toServiceId) {
+    return appData;
+  }
+
+  const position = fromService.portfolio.positions.find((p) => p.id === positionId);
+  if (!position) {
+    return appData;
+  }
+
+  // Get new position ID in target service
+  const newPositionId = toService.portfolio.nextPositionId;
+
+  // Create moved position with new ID
+  const movedPosition: Position = {
+    ...position,
+    id: newPositionId,
+    trades: position.trades.map((t) => ({ ...t, positionId: newPositionId })),
+  };
+
+  // Update services
+  const updatedServices = appData.services.map((service) => {
+    if (service.id === fromServiceId) {
+      // Remove position from source
+      return {
+        ...service,
+        portfolio: {
+          ...service.portfolio,
+          positions: service.portfolio.positions.filter((p) => p.id !== positionId),
+        },
+      };
+    }
+    if (service.id === toServiceId) {
+      // Add position to target
+      return {
+        ...service,
+        portfolio: {
+          ...service.portfolio,
+          positions: [...service.portfolio.positions, movedPosition],
+          nextPositionId: newPositionId + 1,
+        },
+      };
+    }
+    return service;
+  });
+
+  // Update trade history entries
+  const updatedTradeHistory = appData.tradeHistory?.map((entry) => {
+    if (entry.serviceId === fromServiceId && entry.positionId === positionId) {
+      return {
+        ...entry,
+        serviceId: toServiceId,
+        positionId: newPositionId,
+      };
+    }
+    return entry;
+  });
+
+  return {
+    ...appData,
+    services: updatedServices,
+    tradeHistory: updatedTradeHistory,
+  };
+}
+
 export function deleteTrade(
   portfolio: Portfolio,
   positionId: number,

@@ -16,6 +16,7 @@ import {
   updatePositionTaxable,
   addTradeHistoryEntry,
   getTradeHistoryForService,
+  movePosition,
 } from './utils/storage';
 import {
   getPositionSummary,
@@ -723,6 +724,19 @@ function ServiceDetailPage({ service, appData, onBack, onUpdatePortfolio, onRena
     setPortfolio(updatePositionTaxable(portfolio, positionId, isTaxable));
   };
 
+  const handleMovePosition = (positionId: number, toServiceId: string) => {
+    const updatedAppData = movePosition(appData, positionId, service.id, toServiceId);
+    onUpdateAppData(updatedAppData);
+    // Update local portfolio state to reflect the removal
+    setPortfolio({
+      ...portfolio,
+      positions: portfolio.positions.filter((p) => p.id !== positionId),
+    });
+  };
+
+  // Services available to move positions to (excluding current service)
+  const otherServices = appData.services.filter((s) => s.id !== service.id);
+
   const filteredPositions = portfolio.positions.filter((p) =>
     viewMode === 'open' ? p.isOpen : !p.isOpen
   );
@@ -951,6 +965,8 @@ function ServiceDetailPage({ service, appData, onBack, onUpdatePortfolio, onRena
                 onClose={(closeDate) => handleClosePosition(position.id, closeDate)}
                 onReopen={() => handleReopenPosition(position.id)}
                 onDelete={() => handleDeletePosition(position.id)}
+                onMove={(toServiceId) => handleMovePosition(position.id, toServiceId)}
+                otherServices={otherServices}
                 onDeleteTrade={(tradeId) => handleDeleteTrade(position.id, tradeId)}
                 onUpdateMark={(markPrice) => handleUpdateMark(position.id, markPrice)}
                 onUpdateDates={(openDate, closeDate) => handleUpdateDates(position.id, openDate, closeDate)}
@@ -1114,6 +1130,8 @@ interface PositionCardProps {
   onClose: (closeDate?: Date) => void;
   onReopen: () => void;
   onDelete: () => void;
+  onMove: (toServiceId: string) => void;
+  otherServices: Array<{ id: string; name: string }>;
   onDeleteTrade: (tradeId: string) => void;
   onUpdateMark: (markPrice: number | undefined) => void;
   onUpdateDates: (openDate?: Date, closeDate?: Date) => void;
@@ -1170,6 +1188,8 @@ function PositionCard({
   onClose,
   onReopen,
   onDelete,
+  onMove,
+  otherServices,
   onDeleteTrade,
   onUpdateMark,
   onUpdateDates,
@@ -1182,6 +1202,7 @@ function PositionCard({
   const [markInputValue, setMarkInputValue] = useState('');
   const [isClosing, setIsClosing] = useState(false);
   const [closeDateInput, setCloseDateInput] = useState('');
+  const [isMoving, setIsMoving] = useState(false);
   const [isEditingOpenDate, setIsEditingOpenDate] = useState(false);
   const [isEditingCloseDate, setIsEditingCloseDate] = useState(false);
   const [openDateInput, setOpenDateInput] = useState('');
@@ -1316,6 +1337,41 @@ function PositionCard({
             >
               Delete
             </button>
+            {otherServices.length > 0 && (
+              isMoving ? (
+                <div className="flex items-center gap-1">
+                  <select
+                    onClick={(e) => e.stopPropagation()}
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        onMove(e.target.value);
+                        setIsMoving(false);
+                      }
+                    }}
+                    className="px-1 py-0.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    defaultValue=""
+                  >
+                    <option value="" disabled>Select service...</option>
+                    {otherServices.map((s) => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setIsMoving(false); }}
+                    className="px-1.5 py-0.5 text-xs bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setIsMoving(true); }}
+                  className="px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+                >
+                  Move
+                </button>
+              )
+            )}
             <div className="ml-auto text-xs text-gray-500 text-right">
               {position.openDate && (
                 <div className="flex items-center justify-end gap-1">
