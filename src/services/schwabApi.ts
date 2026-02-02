@@ -344,6 +344,9 @@ export async function getAccounts(): Promise<SchwabAccount[]> {
 export async function getAccountPositions(accountId: string): Promise<SchwabAccountPositions> {
   const response = await apiRequest<SchwabAccountResponse>(`/accounts/${accountId}?fields=positions`);
 
+  // Debug: log raw response to see actual structure
+  console.log('[Schwab API] Raw positions response:', response.securitiesAccount.positions?.slice(0, 3));
+
   const positions: SchwabOptionPosition[] = [];
 
   if (response.securitiesAccount.positions) {
@@ -352,6 +355,12 @@ export async function getAccountPositions(accountId: string): Promise<SchwabAcco
       if (pos.instrument.assetType === 'OPTION' && pos.instrument.putCall) {
         const quantity = pos.longQuantity - pos.shortQuantity;
         if (quantity !== 0) {
+          // Debug: log first option to see all available fields
+          if (positions.length === 0) {
+            console.log('[Schwab API] First option instrument:', pos.instrument);
+            console.log('[Schwab API] First option full position:', pos);
+          }
+
           positions.push({
             symbol: pos.instrument.underlyingSymbol || pos.instrument.symbol.split('_')[0],
             optionSymbol: pos.instrument.symbol,
