@@ -367,12 +367,15 @@ function SummaryPage({ appData, onSelectService, onCreateService, onDeleteServic
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">
-          <EditableText
-            value={appData.appTitle || 'Options Trade Tracker'}
-            onSave={onUpdateAppTitle}
-          />
-        </h1>
+        <div className="flex items-baseline gap-3 mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">
+            <EditableText
+              value={appData.appTitle || 'Options Trade Tracker'}
+              onSave={onUpdateAppTitle}
+            />
+          </h1>
+          <span className="text-sm text-gray-400">v{__APP_VERSION__}</span>
+        </div>
 
         {/* Total Summary */}
         <div className="bg-white rounded-lg shadow p-4 mb-6">
