@@ -1458,7 +1458,7 @@ function PositionCard({
                       <option value="">Select Account</option>
                       {schwabAccounts.map((account) => (
                         <option key={account.accountId} value={account.accountId}>
-                          {account.displayName}
+                          {account.nickname || account.displayName}
                         </option>
                       ))}
                     </select>

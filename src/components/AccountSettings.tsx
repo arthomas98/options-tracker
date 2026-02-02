@@ -34,7 +34,11 @@ export function AccountSettings({ onClose }: AccountSettingsProps) {
     disable: disableSchwab,
     signIn: schwabSignIn,
     signOut: schwabSignOut,
+    updateAccountNickname,
   } = useSchwab();
+
+  const [editingAccountId, setEditingAccountId] = useState<string | null>(null);
+  const [nicknameInput, setNicknameInput] = useState('');
 
   const [isActionPending, setIsActionPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -490,14 +494,64 @@ export function AccountSettings({ onClose }: AccountSettingsProps) {
                         Sign Out
                       </button>
                     </div>
-                    <div className="bg-gray-700 rounded-lg p-2 space-y-1">
+                    <div className="bg-gray-700 rounded-lg p-2 space-y-2">
                       {schwabAccounts.map((account) => (
                         <div key={account.accountId} className="flex items-center justify-between text-sm">
-                          <span className="text-white">{account.displayName}</span>
-                          <span className="text-gray-400 text-xs">{account.accountNumber}</span>
+                          {editingAccountId === account.accountId ? (
+                            <div className="flex items-center gap-2 flex-1">
+                              <input
+                                type="text"
+                                value={nicknameInput}
+                                onChange={(e) => setNicknameInput(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    updateAccountNickname(account.accountId, nicknameInput);
+                                    setEditingAccountId(null);
+                                  } else if (e.key === 'Escape') {
+                                    setEditingAccountId(null);
+                                  }
+                                }}
+                                placeholder={account.displayName}
+                                className="flex-1 px-2 py-1 text-sm bg-gray-600 text-white border border-gray-500 rounded focus:outline-none focus:border-blue-500"
+                                autoFocus
+                              />
+                              <button
+                                onClick={() => {
+                                  updateAccountNickname(account.accountId, nicknameInput);
+                                  setEditingAccountId(null);
+                                }}
+                                className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+                              >
+                                Save
+                              </button>
+                              <button
+                                onClick={() => setEditingAccountId(null)}
+                                className="px-2 py-1 text-xs bg-gray-600 text-white rounded hover:bg-gray-500"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          ) : (
+                            <>
+                              <span
+                                className="text-white cursor-pointer hover:text-blue-400"
+                                onClick={() => {
+                                  setEditingAccountId(account.accountId);
+                                  setNicknameInput(account.nickname || '');
+                                }}
+                                title="Click to edit nickname"
+                              >
+                                {account.nickname || account.displayName}
+                              </span>
+                              <span className="text-gray-400 text-xs">{account.accountNumber}</span>
+                            </>
+                          )}
                         </div>
                       ))}
                     </div>
+                    <p className="text-xs text-gray-500">
+                      Click an account name to set a custom nickname.
+                    </p>
                   </div>
                 ) : (
                   <button

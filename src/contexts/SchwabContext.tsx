@@ -26,10 +26,14 @@ interface SchwabContextType {
   disable: () => void;
   signIn: () => Promise<void>;
   signOut: () => void;
+  updateAccountNickname: (accountId: string, nickname: string) => void;
 
   // Data fetching
   refreshAllPositions: () => Promise<void>;
   getNetLiqForPosition: (position: Position) => { netLiq: number; matchedLegs: number; totalLegs: number } | null;
+
+  // Helpers
+  getAccountDisplayName: (accountId: string) => string;
 }
 
 const SchwabContext = createContext<SchwabContextType | null>(null);
@@ -195,6 +199,24 @@ export function SchwabProvider({ children }: { children: ReactNode }) {
     return schwabApi.matchPositionToSchwab(position, accountPositions.positions);
   }, [isEnabled, isSignedIn, positionsCache]);
 
+  // Update account nickname
+  const updateAccountNickname = useCallback((accountId: string, nickname: string) => {
+    const updatedAccounts = accounts.map(account =>
+      account.accountId === accountId
+        ? { ...account, nickname: nickname.trim() || undefined }
+        : account
+    );
+    setAccounts(updatedAccounts);
+    saveSettings(isEnabled, updatedAccounts);
+  }, [accounts, isEnabled, saveSettings]);
+
+  // Get display name for an account (nickname if set, otherwise default)
+  const getAccountDisplayName = useCallback((accountId: string) => {
+    const account = accounts.find(a => a.accountId === accountId);
+    if (!account) return 'Unknown Account';
+    return account.nickname || account.displayName;
+  }, [accounts]);
+
   return (
     <SchwabContext.Provider
       value={{
@@ -210,8 +232,10 @@ export function SchwabProvider({ children }: { children: ReactNode }) {
         disable,
         signIn,
         signOut,
+        updateAccountNickname,
         refreshAllPositions,
         getNetLiqForPosition,
+        getAccountDisplayName,
       }}
     >
       {children}

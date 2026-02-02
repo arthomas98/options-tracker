@@ -133,7 +133,8 @@ export interface TradeStringEntry {
 export interface SchwabAccount {
   accountId: string;
   accountNumber: string;  // Masked account number for display (e.g., "****1234")
-  displayName: string;    // User-friendly name
+  displayName: string;    // Default name from Schwab (e.g., "MARGIN ****1234")
+  nickname?: string;      // User-defined nickname
 }
 
 export interface SchwabSettings {
