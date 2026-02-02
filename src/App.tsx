@@ -1030,7 +1030,7 @@ function TradeHelpModal({ onClose }: TradeHelpModalProps) {
           </div>
 
           <p className="text-sm text-gray-700">
-            Copy from the word <strong>BUY</strong> or <strong>SELL</strong> to the end of the field and paste into the Add Trade field.
+            Copy this string and paste it into the Add Trade field.
           </p>
         </div>
         <div className="p-4 border-t">
