@@ -379,8 +379,14 @@ export async function getAccountPositions(accountId: string): Promise<SchwabAcco
           // Parse strike and expiration from option symbol
           const parsed = parseOptionSymbol(pos.instrument.symbol);
 
+          // Get underlying symbol, stripping any "$" prefix (Schwab uses $SPX for SPX index)
+          let underlying = pos.instrument.underlyingSymbol || pos.instrument.symbol.split(' ')[0];
+          if (underlying.startsWith('$')) {
+            underlying = underlying.substring(1);
+          }
+
           positions.push({
-            symbol: pos.instrument.underlyingSymbol || pos.instrument.symbol.split(' ')[0],
+            symbol: underlying,
             optionSymbol: pos.instrument.symbol,
             quantity,
             marketValue: pos.marketValue,
