@@ -61,8 +61,14 @@ function detectSpreadType(input: string, legCount: number): SpreadType {
 
 export function parseThinkorswimTrade(input: string): Trade | null {
   try {
-    const raw = input.trim();
+    let raw = input.trim();
     if (!raw) return null;
+
+    // Strip any text before BUY or SELL (e.g., "(Replacing #1005300447572) SELL...")
+    const buyOrSellIndex = raw.search(/\b(BUY|SELL)\s+/i);
+    if (buyOrSellIndex > 0) {
+      raw = raw.substring(buyOrSellIndex);
+    }
 
     // Normalize backslash escapes
     const normalized = raw.replace(/\\([+-])/g, '$1');
