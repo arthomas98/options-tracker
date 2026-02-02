@@ -84,10 +84,31 @@ export function SchwabProvider({ children }: { children: ReactNode }) {
 
             // Fetch accounts after successful auth
             const fetchedAccounts = await schwabApi.getAccounts();
-            setAccounts(fetchedAccounts);
+
+            // Preserve nicknames from previously saved accounts
+            let existingAccounts: SchwabAccount[] = [];
+            try {
+              const stored = localStorage.getItem(STORAGE_KEY);
+              if (stored) {
+                const settings: SchwabSettings = JSON.parse(stored);
+                existingAccounts = settings.accounts || [];
+              }
+            } catch {
+              // Ignore errors reading existing settings
+            }
+
+            // Merge nicknames onto fetched accounts
+            const mergedAccounts = fetchedAccounts.map(account => {
+              const existing = existingAccounts.find(a => a.accountId === account.accountId);
+              return existing?.nickname
+                ? { ...account, nickname: existing.nickname }
+                : account;
+            });
+
+            setAccounts(mergedAccounts);
             setIsSignedIn(true);
             setIsEnabled(true);
-            saveSettings(true, fetchedAccounts);
+            saveSettings(true, mergedAccounts);
           } catch (err) {
             console.error('Failed to complete Schwab OAuth:', err);
             setAuthError(err instanceof Error ? err.message : 'OAuth failed');
