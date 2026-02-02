@@ -101,25 +101,41 @@ export function parseThinkorswimTrade(input: string): Trade | null {
     // Check for weeklys
     const isWeekly = /\(Weeklys?\)/i.test(normalized);
 
-    // Extract multiplier (usually 100)
-    const multiplierMatch = normalized.match(/\b(\d+)\s+(?:\(Weeklys?\)\s+)?(?:\d{1,2}\s+[A-Z]{3}\s+\d{2})/i);
-    const multiplier = multiplierMatch ? parseInt(multiplierMatch[1], 10) : 100;
+    // Extract multiplier (usually 100, but futures use format like 1/50)
+    // Futures format: 1/50 means multiplier of 50
+    // Equity format: 100 means multiplier of 100
+    let multiplier = 100;
+    const futuresMultiplierMatch = normalized.match(/\b(\d+)\/(\d+)\s+(?:\d{1,2}\s+[A-Z]{3}\s+\d{2})/i);
+    if (futuresMultiplierMatch) {
+      multiplier = parseInt(futuresMultiplierMatch[2], 10);
+    } else {
+      const equityMultiplierMatch = normalized.match(/\b(\d+)\s+(?:\(Weeklys?\)\s+)?(?:\d{1,2}\s+[A-Z]{3}\s+\d{2})/i);
+      if (equityMultiplierMatch) {
+        multiplier = parseInt(equityMultiplierMatch[1], 10);
+      }
+    }
 
     // Extract symbol - it comes after the quantity/ratio/spread-type and before the multiplier
-    // Pattern: after BUY/SELL +N [ratio] [spread-type] SYMBOL 100
+    // Pattern: after BUY/SELL +N [ratio] [spread-type] SYMBOL 100 or SYMBOL 1/50
+    // Supports both equity symbols (AAPL, GOOGL) and futures symbols (/ES, /ESZ25)
     let symbol = '';
+
+    // Symbol pattern: either /LETTERS+NUMBERS (futures) or LETTERS only (equity)
+    // Futures: /ES, /ESZ25, /CLX24
+    // Equity: AAPL, GOOGL, SPY
+    const symbolRegex = '(\\/[A-Z]+[A-Z0-9]*|[A-Z]{1,5})';
 
     // Try to match symbol patterns
     // Note: ~ prefix indicates unbalanced spread (e.g., ~BUTTERFLY)
     const symbolPatterns = [
-      // Custom spread: SELL -7 2/2/-1/-1 CUSTOM GOOGL 100 or BUY +4 1/3/2 ~BUTTERFLY NFLX 100
-      /~?(?:CUSTOM|VERT|VERTICAL|CALENDAR|DIAGONAL|BUTTERFLY|FLY|CONDOR|STRADDLE|STRANGLE|BACKRATIO|RATIO|ROLL)\s+([A-Z]{1,5})\s+\d+/i,
+      // Custom spread: SELL -7 2/2/-1/-1 CUSTOM GOOGL 100 or BUY +2 1/-2/2 CUSTOM /ESZ25 1/50
+      new RegExp(`~?(?:CUSTOM|VERT|VERTICAL|CALENDAR|DIAGONAL|BUTTERFLY|FLY|CONDOR|STRADDLE|STRANGLE|BACKRATIO|RATIO|ROLL)\\s+${symbolRegex}\\s+\\d+`, 'i'),
       // Simple spread with type: SELL -4 CALENDAR SHOP 100 or SELL -2 1/3 BACKRATIO AMZN 100
-      /[+-]?\d+\s+(?:\d+\/[\d/]+\s+)?~?(?:VERT(?:ICAL)?|CALENDAR|DIAGONAL|BUTTERFLY|FLY|CONDOR|IC|STRADDLE|STRANGLE|BACKRATIO|RATIO)\s+(?:ROLL\s+)?([A-Z]{1,5})\s+\d+/i,
+      new RegExp(`[+-]?\\d+\\s+(?:\\d+\\/[\\d/]+\\s+)?~?(?:VERT(?:ICAL)?|CALENDAR|DIAGONAL|BUTTERFLY|FLY|CONDOR|IC|STRADDLE|STRANGLE|BACKRATIO|RATIO)\\s+(?:ROLL\\s+)?${symbolRegex}\\s+\\d+`, 'i'),
       // Roll pattern: SELL -20 VERT ROLL RUT 100
-      /ROLL\s+([A-Z]{1,5})\s+\d+/i,
-      // Simple option: BUY +2 BE 100
-      /(?:BUY|SELL)\s+[+-]?\d+\s+([A-Z]{1,5})\s+\d+/i,
+      new RegExp(`ROLL\\s+${symbolRegex}\\s+\\d+`, 'i'),
+      // Simple option: BUY +2 BE 100 or BUY +2 /ESZ25 1/50
+      new RegExp(`(?:BUY|SELL)\\s+[+-]?\\d+\\s+${symbolRegex}\\s+\\d+`, 'i'),
     ];
 
     for (const pattern of symbolPatterns) {
@@ -132,7 +148,7 @@ export function parseThinkorswimTrade(input: string): Trade | null {
 
     if (!symbol) {
       // Fallback: find symbol between quantity and multiplier
-      const fallbackMatch = normalized.match(/[+-]?\d+\s+(?:\d+\/[^\s]+\s+)?(?:CUSTOM\s+)?([A-Z]{1,5})\s+\d+/i);
+      const fallbackMatch = normalized.match(new RegExp(`[+-]?\\d+\\s+(?:\\d+\\/[^\\s]+\\s+)?(?:CUSTOM\\s+)?${symbolRegex}\\s+\\d+`, 'i'));
       if (fallbackMatch) {
         symbol = fallbackMatch[1].toUpperCase();
       }
