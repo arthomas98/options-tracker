@@ -1334,7 +1334,7 @@ function PositionCard({
                 Reopen
               </button>
             )}
-            <div className="flex gap-1 ml-4">
+            <div className="flex gap-1 ml-8">
               <button
                 onClick={(e) => { e.stopPropagation(); onDelete(); }}
                 className="px-2 py-0.5 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200"
