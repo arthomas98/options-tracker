@@ -544,11 +544,14 @@ function SummaryPage({ appData, onSelectService, onCreateService, onDeleteServic
                     {/* Title row with fixed height */}
                     <div className="flex justify-between items-start mb-2 min-h-[40px]">
                       <div className="flex-1 min-w-0 pr-2">
-                        <h3 className="text-base font-bold text-gray-800 truncate">
-                          <EditableText
-                            value={service.name}
-                            onSave={(newName) => onRenameService(service.id, newName)}
-                          />
+                        <h3 className="text-base font-bold text-gray-800 flex items-center gap-1">
+                          <span className="truncate">
+                            <EditableText
+                              value={service.name}
+                              onSave={(newName) => onRenameService(service.id, newName)}
+                            />
+                          </span>
+                          <span className="text-gray-400 flex-shrink-0">▼</span>
                         </h3>
                         <p className="text-xs text-gray-500">
                           {summary.totalPositionCount} positions ({summary.activePositionCount} open) · {summary.totalTradeCount} trades
@@ -562,7 +565,6 @@ function SummaryPage({ appData, onSelectService, onCreateService, onDeleteServic
                         >
                           🗑️
                         </button>
-                        <span className="text-gray-400">▼</span>
                       </div>
                     </div>
                     {/* Stats row - always aligned */}
