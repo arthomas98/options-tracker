@@ -170,12 +170,13 @@ export function SchwabProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(() => {
     schwabApi.signOut();
     setIsSignedIn(false);
-    setAccounts([]);
+    // Don't clear accounts from state or localStorage - preserve nicknames
+    // Just clear the positions cache and auth state
     setPositionsCache(new Map());
     setLastRefresh(null);
     setAuthError(null);
-    saveSettings(isEnabled, []);
-  }, [isEnabled, saveSettings]);
+    // Note: accounts with nicknames remain in localStorage for next sign-in
+  }, []);
 
   // Fetch positions from all accounts and cache them
   const refreshAllPositions = useCallback(async () => {
