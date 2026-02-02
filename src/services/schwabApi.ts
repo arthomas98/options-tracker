@@ -341,6 +341,17 @@ export async function getAccounts(): Promise<SchwabAccount[]> {
   return accounts;
 }
 
+// Normalize symbol for matching (handle variants like SPXW -> SPX)
+function normalizeSymbol(symbol: string): string {
+  const upper = symbol.toUpperCase();
+  // SPXW (SPX Weeklies) should match SPX
+  if (upper === 'SPXW') return 'SPX';
+  // Add other mappings as needed (e.g., RUTW -> RUT, NDXP -> NDX)
+  if (upper === 'RUTW') return 'RUT';
+  if (upper === 'NDXP' || upper === 'NDXW') return 'NDX';
+  return upper;
+}
+
 // Parse option symbol to extract expiration and strike
 // Format: "SYMBOL YYMMDD[C/P]SSSSSSSS" e.g., "TSLA 260821C00520000"
 function parseOptionSymbol(optionSymbol: string): { expiration: string; strike: number } | null {
@@ -471,9 +482,10 @@ export function matchPositionToSchwab(
   for (const [, leg] of activeLegs) {
     const expStr = leg.expiration.toISOString().split('T')[0];
 
-    // Find matching Schwab position
+    // Find matching Schwab position (normalize symbols for comparison)
+    const normalizedPositionSymbol = normalizeSymbol(position.symbol);
     const schwabMatch = schwabPositions.find(sp =>
-      sp.symbol.toUpperCase() === position.symbol.toUpperCase() &&
+      normalizeSymbol(sp.symbol) === normalizedPositionSymbol &&
       sp.expirationDate === expStr &&
       sp.optionType === leg.optionType &&
       sp.strikePrice === leg.strike &&
