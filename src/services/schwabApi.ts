@@ -460,25 +460,6 @@ export function matchPositionToSchwab(
   let netLiq = 0;
   let matchedLegs = 0;
 
-  // Debug: log what we're trying to match
-  console.log(`[Schwab Match] Position ${position.symbol}:`, {
-    activeLegs: activeLegs.map(([key, leg]) => ({
-      key,
-      quantity: leg.quantity,
-      optionType: leg.optionType,
-      strike: leg.strike,
-      expiration: leg.expiration.toISOString().split('T')[0],
-    })),
-    schwabPositions: schwabPositions.map(sp => ({
-      symbol: sp.symbol,
-      optionType: sp.optionType,
-      strike: sp.strikePrice,
-      expiration: sp.expirationDate,
-      quantity: sp.quantity,
-      marketValue: sp.marketValue,
-    })),
-  });
-
   for (const [, leg] of activeLegs) {
     const expStr = leg.expiration.toISOString().split('T')[0];
 
@@ -495,15 +476,6 @@ export function matchPositionToSchwab(
     if (schwabMatch) {
       netLiq += schwabMatch.marketValue;
       matchedLegs++;
-    } else {
-      // Debug: log why no match
-      console.log(`[Schwab Match] No match for leg:`, {
-        symbol: position.symbol,
-        expiration: expStr,
-        optionType: leg.optionType,
-        strike: leg.strike,
-        quantity: leg.quantity,
-      });
     }
   }
 
