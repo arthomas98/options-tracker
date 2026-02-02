@@ -2,22 +2,13 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
-import { execSync } from 'child_process'
-
-// Get git commit count for version number
-const getGitCommitCount = () => {
-  try {
-    return execSync('git rev-list --count HEAD').toString().trim()
-  } catch {
-    return '0'
-  }
-}
+import packageJson from './package.json'
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   define: {
-    __APP_VERSION__: JSON.stringify(`1.${getGitCommitCount()}`),
+    __APP_VERSION__: JSON.stringify(packageJson.version),
   },
   // Environment variables prefixed with VITE_ are exposed to client
   // Set VITE_GOOGLE_CLIENT_ID in .env.local for development
