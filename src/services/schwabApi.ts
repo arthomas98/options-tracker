@@ -341,11 +341,32 @@ export async function getAccounts(): Promise<SchwabAccount[]> {
   return accounts;
 }
 
+// Parse option symbol to extract expiration and strike
+// Format: "SYMBOL YYMMDD[C/P]SSSSSSSS" e.g., "TSLA 260821C00520000"
+function parseOptionSymbol(optionSymbol: string): { expiration: string; strike: number } | null {
+  // Match pattern: letters/numbers, space, 6 digits, C or P, 8 digits
+  const match = optionSymbol.match(/\s(\d{6})[CP](\d{8})$/);
+  if (!match) {
+    return null;
+  }
+
+  const dateStr = match[1]; // YYMMDD
+  const strikeStr = match[2]; // 8 digits, divide by 1000
+
+  // Parse date: YYMMDD -> YYYY-MM-DD
+  const year = 2000 + parseInt(dateStr.substring(0, 2), 10);
+  const month = dateStr.substring(2, 4);
+  const day = dateStr.substring(4, 6);
+  const expiration = `${year}-${month}-${day}`;
+
+  // Parse strike: divide by 1000
+  const strike = parseInt(strikeStr, 10) / 1000;
+
+  return { expiration, strike };
+}
+
 export async function getAccountPositions(accountId: string): Promise<SchwabAccountPositions> {
   const response = await apiRequest<SchwabAccountResponse>(`/accounts/${accountId}?fields=positions`);
-
-  // Debug: log raw response to see actual structure
-  console.log('[Schwab API] Raw positions response:', response.securitiesAccount.positions?.slice(0, 3));
 
   const positions: SchwabOptionPosition[] = [];
 
@@ -355,20 +376,17 @@ export async function getAccountPositions(accountId: string): Promise<SchwabAcco
       if (pos.instrument.assetType === 'OPTION' && pos.instrument.putCall) {
         const quantity = pos.longQuantity - pos.shortQuantity;
         if (quantity !== 0) {
-          // Debug: log first option to see all available fields
-          if (positions.length === 0) {
-            console.log('[Schwab API] First option instrument:', pos.instrument);
-            console.log('[Schwab API] First option full position:', pos);
-          }
+          // Parse strike and expiration from option symbol
+          const parsed = parseOptionSymbol(pos.instrument.symbol);
 
           positions.push({
-            symbol: pos.instrument.underlyingSymbol || pos.instrument.symbol.split('_')[0],
+            symbol: pos.instrument.underlyingSymbol || pos.instrument.symbol.split(' ')[0],
             optionSymbol: pos.instrument.symbol,
             quantity,
             marketValue: pos.marketValue,
             optionType: pos.instrument.putCall,
-            strikePrice: pos.instrument.strikePrice || 0,
-            expirationDate: pos.instrument.optionExpirationDate?.split('T')[0] || '',
+            strikePrice: parsed?.strike || 0,
+            expirationDate: parsed?.expiration || '',
           });
         }
       }
