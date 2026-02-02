@@ -12,8 +12,10 @@ const REDIRECT_URI = `${window.location.origin}/auth/schwab/callback`;
 
 // Schwab OAuth endpoints
 const SCHWAB_AUTH_URL = 'https://api.schwabapi.com/v1/oauth/authorize';
-const SCHWAB_TOKEN_URL = 'https://api.schwabapi.com/v1/oauth/token';
 const SCHWAB_API_BASE = 'https://api.schwabapi.com/trader/v1';
+
+// Our serverless function handles token exchange to avoid CORS and protect client secret
+const TOKEN_PROXY_URL = '/api/schwab-token';
 
 // Storage keys
 const TOKEN_STORAGE_KEY = 'schwab-tokens';
@@ -148,27 +150,24 @@ export async function handleOAuthCallback(authCode: string): Promise<void> {
     throw new Error('PKCE verifier not found. Please try signing in again.');
   }
 
-  // Exchange authorization code for tokens
-  const params = new URLSearchParams({
-    grant_type: 'authorization_code',
-    client_id: SCHWAB_CLIENT_ID,
-    code: authCode,
-    redirect_uri: REDIRECT_URI,
-    code_verifier: codeVerifier,
-  });
-
-  const response = await fetch(SCHWAB_TOKEN_URL, {
+  // Exchange authorization code for tokens via our serverless function
+  const response = await fetch(TOKEN_PROXY_URL, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
+      'Content-Type': 'application/json',
     },
-    body: params.toString(),
+    body: JSON.stringify({
+      grant_type: 'authorization_code',
+      code: authCode,
+      redirect_uri: REDIRECT_URI,
+      code_verifier: codeVerifier,
+    }),
   });
 
   if (!response.ok) {
-    const errorText = await response.text();
-    console.error('Token exchange failed:', errorText);
-    throw new Error(`Failed to exchange authorization code: ${response.status}`);
+    const errorData = await response.json().catch(() => ({}));
+    console.error('Token exchange failed:', errorData);
+    throw new Error(errorData.error_description || errorData.error || `Failed to exchange authorization code: ${response.status}`);
   }
 
   const data = await response.json();
@@ -194,18 +193,16 @@ async function refreshAccessToken(): Promise<void> {
     throw new Error('No refresh token available');
   }
 
-  const params = new URLSearchParams({
-    grant_type: 'refresh_token',
-    client_id: SCHWAB_CLIENT_ID,
-    refresh_token: tokens.refresh_token,
-  });
-
-  const response = await fetch(SCHWAB_TOKEN_URL, {
+  // Refresh token via our serverless function
+  const response = await fetch(TOKEN_PROXY_URL, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
+      'Content-Type': 'application/json',
     },
-    body: params.toString(),
+    body: JSON.stringify({
+      grant_type: 'refresh_token',
+      refresh_token: tokens.refresh_token,
+    }),
   });
 
   if (!response.ok) {
