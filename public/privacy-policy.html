@@ -40,6 +40,9 @@
     <li><strong>Google Account Information:</strong> If you choose to enable Google Sheets sync,
         the App accesses your Google account to read and write data to a Google Sheets spreadsheet
         that you own. We only access the specific spreadsheet created by the App.</li>
+    <li><strong>Schwab Account Information:</strong> If you choose to connect your Schwab brokerage account,
+        the App accesses read-only position data to display current market values. We do not access
+        your full account number, cannot place trades, and cannot transfer funds.</li>
   </ul>
 
   <h2>How We Use Your Information</h2>
@@ -55,6 +58,9 @@
         localStorage. This data never leaves your device unless you enable Google Sheets sync.</li>
     <li><strong>Google Sheets:</strong> If you enable sync, your data is stored in a Google Sheets
         spreadsheet in your own Google Drive account. You maintain full ownership and control of this data.</li>
+    <li><strong>Schwab Tokens:</strong> If you connect Schwab, authentication tokens are stored locally
+        in your browser's localStorage. Position data is fetched on-demand and cached temporarily in
+        your browser only - it is never stored on external servers.</li>
   </ul>
 
   <h2>Data Sharing</h2>
@@ -79,11 +85,22 @@
     <li>We do not share Google user data with third parties.</li>
   </ul>
 
+  <h2>Schwab API Services</h2>
+  <p>
+    The App uses the Schwab Trader API to provide optional real-time position values. Specifically:
+  </p>
+  <ul>
+    <li>We use OAuth 2.0 with PKCE for secure authentication - your Schwab password is never seen by the App.</li>
+    <li>We only request read-only access to view your positions and their market values.</li>
+    <li>We cannot place trades, transfer money, or access your full account number.</li>
+    <li>You can revoke access at any time through the App settings or your Schwab account.</li>
+  </ul>
+
   <h2>Data Security</h2>
   <p>
     The App runs entirely in your web browser. We do not operate servers that store your data.
-    Authentication with Google is handled securely through Google's OAuth 2.0 system - we never
-    see or store your Google password.
+    Authentication with Google and Schwab is handled securely through OAuth 2.0 systems - we never
+    see or store your passwords.
   </p>
 
   <h2>Your Rights</h2>
