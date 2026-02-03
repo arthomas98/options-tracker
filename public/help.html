@@ -222,6 +222,7 @@
       <li><a href="#adding-trades">Adding Trades</a></li>
       <li><a href="#google-sync">Google Sheets Sync</a></li>
       <li><a href="#schwab-integration">Schwab Integration</a></li>
+      <li><a href="#architecture">Application Architecture</a></li>
       <li><a href="#schwab-security">Schwab Security & Architecture</a></li>
       <li><a href="#tips">Tips & Tricks</a></li>
       <li><a href="#technology-stack">Technology Stack</a></li>
@@ -472,6 +473,69 @@ Sheets - Export/Import for local data backup</p>
       <td>✓ Auto-matched</td>
     </tr>
   </table>
+
+  <h2 id="architecture">Application Architecture</h2>
+
+  <p>This is a client-side web application - all processing happens in your browser:</p>
+
+  <pre><code>┌─────────────────────────────────────────────────────────────────┐
+│                        YOUR BROWSER                              │
+│  ┌─────────────┐  ┌──────────────┐  ┌────────────┐              │
+│  │ React App   │  │ localStorage │  │ OAuth      │              │
+│  │ (all logic) │←→│ (JSON data)  │  │ Tokens     │              │
+│  └─────────────┘  └──────────────┘  └─────┬──────┘              │
+└───────────────────────────────────────────┼─────────────────────┘
+        ↑                                   │
+        │ static files                      │ API calls
+        ↓                                   ↓
+   ┌─────────────┐              ┌───────────────────────┐
+   │   Vercel    │              │  Google Sheets API    │
+   │   (host)    │              │  Schwab Trader API    │
+   └─────────────┘              └───────────────────────┘</code></pre>
+
+  <h3>Key Points</h3>
+  <ul>
+    <li><strong>Vercel</strong> is just a file server - it hosts the static HTML, JavaScript, and CSS files</li>
+    <li><strong>Your browser</strong> downloads these files and runs the entire application locally</li>
+    <li><strong>All calculations</strong> (P&L, positions, etc.) happen in your browser</li>
+    <li><strong>localStorage</strong> stores your data as JSON in your browser's local database</li>
+    <li><strong>Google Sheets</strong> (optional) provides cloud backup and cross-device sync</li>
+    <li><strong>Schwab API</strong> (optional) provides real-time position values</li>
+  </ul>
+
+  <h3>Data Storage & Limitations</h3>
+  <p>By default, your data is stored in your browser's <strong>localStorage</strong>:</p>
+
+  <div class="success-box">
+    <strong>What persists:</strong>
+    <ul style="margin-bottom: 0;">
+      <li>Data survives closing and reopening the browser ✓</li>
+      <li>Data survives computer restarts ✓</li>
+      <li>Data persists indefinitely until cleared ✓</li>
+    </ul>
+  </div>
+
+  <div class="warning-box">
+    <strong>Limitations - data is isolated to:</strong>
+    <ul style="margin-bottom: 0;">
+      <li><strong>Same browser</strong> - Chrome and Safari have separate storage</li>
+      <li><strong>Same device</strong> - your laptop and phone are separate</li>
+      <li><strong>Same domain</strong> - tied to this specific URL</li>
+    </ul>
+  </div>
+
+  <p><strong>When you could lose data:</strong></p>
+  <ul>
+    <li>Clearing browser cache/data</li>
+    <li>Using a different browser</li>
+    <li>Using a different device</li>
+    <li>Using private/incognito mode (never persists)</li>
+  </ul>
+
+  <div class="info-box">
+    <strong>Recommendation:</strong> Either enable Google Sheets sync or regularly use the 
+    <strong>Export</strong> function in Settings to create backup files.
+  </div>
 
   <h2 id="schwab-security">Schwab Security & Architecture</h2>
 

@@ -262,7 +262,7 @@ function App() {
         <SyncStatusIndicator />
         <div className="flex items-center gap-3">
           <a
-            href="/Requirements.html"
+            href="/help.html"
             target="_blank"
             rel="noopener noreferrer"
             className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
