@@ -24,4 +24,12 @@ export default defineConfig({
   optimizeDeps: {
     include: ['react', 'react-dom', 'chart.js', 'react-chartjs-2'],
   },
+  // Multi-page app: landing page at /, React app at /app
+  build: {
+    rollupOptions: {
+      input: {
+        app: path.resolve(__dirname, 'app.html'),
+      },
+    },
+  },
 })

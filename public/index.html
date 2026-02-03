@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Options Trade Tracker - Track Your Options Trading Performance</title>
+  <meta name="description" content="A free web-based tool for tracking options trading positions, calculating P&L, and syncing data across devices.">
+  <style>
+    :root {
+      --primary-color: #2563eb;
+      --text-color: #1a1a1a;
+      --bg-color: #f8fafc;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      line-height: 1.6;
+      color: var(--text-color);
+      background-color: var(--bg-color);
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+      color: white;
+      padding: 60px 20px;
+      text-align: center;
+    }
+
+    .hero h1 {
+      font-size: 2.5rem;
+      margin-bottom: 16px;
+    }
+
+    .hero p {
+      font-size: 1.25rem;
+      opacity: 0.9;
+      max-width: 600px;
+      margin: 0 auto 30px;
+    }
+
+    .cta-button {
+      display: inline-block;
+      background: white;
+      color: var(--primary-color);
+      padding: 14px 32px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1.1rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .cta-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 60px 20px;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 30px;
+      margin-bottom: 40px;
+    }
+
+    .feature {
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .feature h3 {
+      color: var(--primary-color);
+      margin-bottom: 10px;
+      font-size: 1.1rem;
+    }
+
+    .feature p {
+      color: #666;
+      font-size: 0.95rem;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 40px;
+      color: #333;
+    }
+
+    .how-it-works {
+      background: white;
+      border-radius: 12px;
+      padding: 40px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      margin-bottom: 40px;
+    }
+
+    .how-it-works ol {
+      padding-left: 24px;
+    }
+
+    .how-it-works li {
+      margin: 12px 0;
+      color: #555;
+    }
+
+    .privacy-section {
+      background: #e0f2fe;
+      border-radius: 12px;
+      padding: 30px;
+      text-align: center;
+    }
+
+    .privacy-section h3 {
+      color: #0369a1;
+      margin-bottom: 12px;
+    }
+
+    .privacy-section p {
+      color: #0c4a6e;
+      margin-bottom: 16px;
+    }
+
+    .privacy-section a {
+      color: var(--primary-color);
+    }
+
+    footer {
+      background: #1e293b;
+      color: #94a3b8;
+      padding: 30px 20px;
+      text-align: center;
+    }
+
+    footer a {
+      color: #cbd5e1;
+      margin: 0 12px;
+    }
+
+    .logo {
+      width: 60px;
+      height: 60px;
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+  <section class="hero">
+    <img src="/logo.svg" alt="Options Trade Tracker Logo" class="logo">
+    <h1>Options Trade Tracker</h1>
+    <p>A free, privacy-focused tool for tracking your options trading positions and calculating P&L.</p>
+    <a href="/app" class="cta-button">Launch App</a>
+  </section>
+
+  <div class="container">
+    <h2>Features</h2>
+    <div class="features">
+      <div class="feature">
+        <h3>Track Positions</h3>
+        <p>Paste trade confirmations directly from Thinkorswim. Supports spreads, single options, and complex multi-leg strategies.</p>
+      </div>
+      <div class="feature">
+        <h3>Calculate P&L</h3>
+        <p>Automatic profit/loss calculations for open and closed positions. View cumulative performance over time.</p>
+      </div>
+      <div class="feature">
+        <h3>Google Sheets Sync</h3>
+        <p>Optionally sync your data to Google Sheets for backup and cross-device access. Your data stays in your Google Drive.</p>
+      </div>
+      <div class="feature">
+        <h3>Schwab Integration</h3>
+        <p>Connect your Schwab account to automatically fetch real-time position values. Read-only access keeps your account secure.</p>
+      </div>
+      <div class="feature">
+        <h3>Tax Tracking</h3>
+        <p>Mark positions as taxable or non-taxable. Track trades across different account types.</p>
+      </div>
+      <div class="feature">
+        <h3>100% Private</h3>
+        <p>Your data is stored locally in your browser. No accounts required. We never see your trading data.</p>
+      </div>
+    </div>
+
+    <div class="how-it-works">
+      <h2>How It Works</h2>
+      <ol>
+        <li><strong>Create a Service</strong> - Organize trades by strategy or advisory service</li>
+        <li><strong>Add Trades</strong> - Paste trade strings from Thinkorswim or enter manually</li>
+        <li><strong>Track Performance</strong> - View P&L, charts, and position details</li>
+        <li><strong>Sync (Optional)</strong> - Enable Google Sheets sync for backup and multi-device access</li>
+      </ol>
+    </div>
+
+    <div class="privacy-section">
+      <h3>Your Privacy Matters</h3>
+      <p>Options Trade Tracker runs entirely in your browser. We don't collect, store, or have access to your trading data. Optional integrations with Google and Schwab use industry-standard OAuth - we never see your passwords.</p>
+      <a href="/privacy-policy.html">Read our Privacy Policy</a>
+    </div>
+  </div>
+
+  <footer>
+    <p>
+      <a href="/app">Launch App</a>
+      <a href="/help.html">Help & Documentation</a>
+      <a href="/privacy-policy.html">Privacy Policy</a>
+    </p>
+    <p style="margin-top: 16px; font-size: 0.9rem;">
+      Options Trade Tracker v1.14 · Open Source
+    </p>
+  </footer>
+</body>
+</html>

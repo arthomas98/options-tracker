@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <!-- Background circle -->
+  <circle cx="60" cy="60" r="56" fill="#2563eb"/>
+
+  <!-- Chart bars representing trading/P&L -->
+  <rect x="25" y="65" width="14" height="25" rx="2" fill="white"/>
+  <rect x="43" y="50" width="14" height="40" rx="2" fill="white"/>
+  <rect x="61" y="35" width="14" height="55" rx="2" fill="white"/>
+  <rect x="79" y="45" width="14" height="45" rx="2" fill="#22c55e"/>
+
+  <!-- Upward trend line -->
+  <path d="M 30 75 L 50 60 L 68 45 L 86 30" stroke="#22c55e" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Arrow head -->
+  <polygon points="92,28 82,26 84,36" fill="#22c55e"/>
+</svg>
