@@ -16,7 +16,7 @@ import {
 } from 'chart.js';
 import { Line, Bar } from 'react-chartjs-2';
 import type { Position } from '../types/trade';
-import { getChartData, type ChartType, type ChartPeriod } from '../utils/chartCalculations';
+import { getChartData, type ChartType, type ChartPeriod, type ChartSegment } from '../utils/chartCalculations';
 
 // Register Chart.js components
 ChartJS.register(
@@ -47,20 +47,19 @@ const PERIOD_LABELS: Record<ChartPeriod, string> = {
   all: 'All Time',
 };
 
-const PERIOD_BAR_LABELS: Record<ChartPeriod, string> = {
-  last30: 'By Day (30d)',
-  currentYear: `By Month (${new Date().getFullYear()})`,
-  previousYear: `By Month (${new Date().getFullYear() - 1})`,
-  all: 'By Month (All)',
+const SEGMENT_LABELS: Record<ChartSegment, string> = {
+  month: 'By Month',
+  week: 'By Week',
 };
 
 export function PnLChart({ positions }: PnLChartProps) {
   const [chartType, setChartType] = useState<ChartType>('line');
   const [period, setPeriod] = useState<ChartPeriod>('currentYear');
+  const [segment, setSegment] = useState<ChartSegment>('month');
 
   const chartData = useMemo(
-    () => getChartData(positions, chartType, period),
-    [positions, chartType, period]
+    () => getChartData(positions, chartType, period, segment),
+    [positions, chartType, period, segment]
   );
 
   // Check if there's any data to show
@@ -233,10 +232,25 @@ export function PnLChart({ positions }: PnLChartProps) {
           >
             {(Object.keys(PERIOD_LABELS) as ChartPeriod[]).map((p) => (
               <option key={p} value={p}>
-                {chartType === 'bar' ? PERIOD_BAR_LABELS[p] : PERIOD_LABELS[p]}
+                {PERIOD_LABELS[p]}
               </option>
             ))}
           </select>
+
+          {/* Segment Selector (only show for non-last30 periods) */}
+          {period !== 'last30' && (
+            <select
+              value={segment}
+              onChange={(e) => setSegment(e.target.value as ChartSegment)}
+              className="px-2 py-1 bg-gray-100 rounded-lg text-gray-600 hover:text-gray-800 focus:outline-none cursor-pointer"
+            >
+              {(Object.keys(SEGMENT_LABELS) as ChartSegment[]).map((s) => (
+                <option key={s} value={s}>
+                  {SEGMENT_LABELS[s]}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
       </div>
 

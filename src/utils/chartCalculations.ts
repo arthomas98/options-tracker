@@ -5,6 +5,7 @@ import { calculatePositionPnL } from './calculations';
 
 export type ChartType = 'line' | 'bar';
 export type ChartPeriod = 'last30' | 'currentYear' | 'previousYear' | 'all';
+export type ChartSegment = 'month' | 'week';
 
 export interface ChartDataPoint {
   label: string;
@@ -102,6 +103,39 @@ function generateMonthsInRange(start: Date, end: Date): Date[] {
     current.setMonth(current.getMonth() + 1);
   }
   return months;
+}
+
+// Get the Monday of the week containing this date
+function getWeekStart(date: Date): Date {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust for Sunday
+  d.setDate(diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+// Format week as "M/D" (start of week)
+function formatWeekKey(date: Date): string {
+  const weekStart = getWeekStart(date);
+  return `${weekStart.getMonth() + 1}/${weekStart.getDate()}/${weekStart.getFullYear()}`;
+}
+
+// Format week label as "M/D"
+function formatWeekLabel(date: Date): string {
+  return `${date.getMonth() + 1}/${date.getDate()}`;
+}
+
+// Generate all weeks in range (returns Monday of each week)
+function generateWeeksInRange(start: Date, end: Date): Date[] {
+  const weeks: Date[] = [];
+  const current = getWeekStart(start);
+
+  while (current <= end) {
+    weeks.push(new Date(current));
+    current.setDate(current.getDate() + 7);
+  }
+  return weeks;
 }
 
 // Calculate cumulative P&L by day for line chart
@@ -255,22 +289,96 @@ export function getPnLByMonth(
   });
 }
 
-// Main function to get chart data based on type and period
+// Calculate cumulative P&L by week for line chart
+export function getCumulativePnLByWeek(
+  positions: Position[],
+  period: ChartPeriod
+): ChartDataPoint[] {
+  const closedPnLs = getClosedPositionPnLs(positions);
+  const { start, end } = getDateRangeForPeriod(period);
+  const filteredPnLs = filterByDateRange(closedPnLs, start, end);
+
+  // Group P&L by week
+  const pnlByWeek = new Map<string, number>();
+  for (const item of filteredPnLs) {
+    const key = formatWeekKey(item.closeDate);
+    pnlByWeek.set(key, (pnlByWeek.get(key) || 0) + item.pnl);
+  }
+
+  // Calculate P&L before the period started (for cumulative)
+  let prePeriodPnL = 0;
+  for (const item of closedPnLs) {
+    if (item.closeDate < start) {
+      prePeriodPnL += item.pnl;
+    }
+  }
+
+  // Generate data points for each week
+  const weeks = generateWeeksInRange(start, end);
+  let cumulative = prePeriodPnL;
+
+  return weeks.map((week) => {
+    const key = formatWeekKey(week);
+    cumulative += pnlByWeek.get(key) || 0;
+    return {
+      label: formatWeekLabel(week),
+      date: week,
+      value: cumulative,
+    };
+  });
+}
+
+// Calculate P&L by week for bar chart
+export function getPnLByWeek(
+  positions: Position[],
+  period: ChartPeriod
+): ChartDataPoint[] {
+  const closedPnLs = getClosedPositionPnLs(positions);
+  const { start, end } = getDateRangeForPeriod(period);
+  const filteredPnLs = filterByDateRange(closedPnLs, start, end);
+
+  // Group P&L by week
+  const pnlByWeek = new Map<string, number>();
+  for (const item of filteredPnLs) {
+    const key = formatWeekKey(item.closeDate);
+    pnlByWeek.set(key, (pnlByWeek.get(key) || 0) + item.pnl);
+  }
+
+  // Generate data points for each week
+  const weeks = generateWeeksInRange(start, end);
+  return weeks.map((week) => {
+    const key = formatWeekKey(week);
+    return {
+      label: formatWeekLabel(week),
+      date: week,
+      value: pnlByWeek.get(key) || 0,
+    };
+  });
+}
+
+// Main function to get chart data based on type, period, and segment
 export function getChartData(
   positions: Position[],
   chartType: ChartType,
-  period: ChartPeriod
+  period: ChartPeriod,
+  segment: ChartSegment = 'month'
 ): ChartDataPoint[] {
   if (chartType === 'line') {
     // Line chart shows cumulative P&L
     if (period === 'last30') {
       return getCumulativePnLByDay(positions, period);
     }
+    if (segment === 'week') {
+      return getCumulativePnLByWeek(positions, period);
+    }
     return getCumulativePnLByMonth(positions, period);
   } else {
     // Bar chart shows P&L per period
     if (period === 'last30') {
       return getPnLByDay(positions, period);
+    }
+    if (segment === 'week') {
+      return getPnLByWeek(positions, period);
     }
     return getPnLByMonth(positions, period);
   }
