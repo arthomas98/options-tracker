@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Options Trade Tracker - Help</title>
+  <style>
+    :root {
+      --primary-color: #2563eb;
+      --text-color: #1a1a1a;
+      --bg-color: #fdfdfd;
+      --border-color: #e5e5e5;
+      --code-bg: #f4f4f5;
+      --success-color: #16a34a;
+      --warning-color: #ca8a04;
+    }
+
+    html {
+      color: var(--text-color);
+      background-color: var(--bg-color);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      line-height: 1.6;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    h1 {
+      color: #111;
+      border-bottom: 2px solid var(--primary-color);
+      padding-bottom: 10px;
+    }
+
+    h2 {
+      color: #333;
+      margin-top: 40px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    h3 {
+      color: #444;
+      margin-top: 30px;
+    }
+
+    a {
+      color: var(--primary-color);
+    }
+
+    code {
+      background-color: var(--code-bg);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+      font-size: 0.9em;
+    }
+
+    pre {
+      background-color: var(--code-bg);
+      padding: 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+    }
+
+    pre code {
+      padding: 0;
+      background: none;
+    }
+
+    .info-box {
+      background-color: #eff6ff;
+      border-left: 4px solid var(--primary-color);
+      padding: 16px;
+      margin: 20px 0;
+      border-radius: 0 8px 8px 0;
+    }
+
+    .warning-box {
+      background-color: #fefce8;
+      border-left: 4px solid var(--warning-color);
+      padding: 16px;
+      margin: 20px 0;
+      border-radius: 0 8px 8px 0;
+    }
+
+    .success-box {
+      background-color: #f0fdf4;
+      border-left: 4px solid var(--success-color);
+      padding: 16px;
+      margin: 20px 0;
+      border-radius: 0 8px 8px 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 12px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    th {
+      background-color: var(--code-bg);
+      font-weight: 600;
+    }
+
+    ul, ol {
+      padding-left: 24px;
+    }
+
+    li {
+      margin: 8px 0;
+    }
+
+    .toc {
+      background-color: var(--code-bg);
+      padding: 20px 30px;
+      border-radius: 8px;
+      margin: 30px 0;
+    }
+
+    .toc h3 {
+      margin-top: 0;
+    }
+
+    .toc ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .toc li {
+      margin: 6px 0;
+    }
+
+    .toc a {
+      text-decoration: none;
+    }
+
+    .toc a:hover {
+      text-decoration: underline;
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-bottom: 20px;
+      color: var(--primary-color);
+      text-decoration: none;
+    }
+
+    .back-link:hover {
+      text-decoration: underline;
+    }
+
+    .architecture-diagram {
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 30px;
+      margin: 20px 0;
+      text-align: center;
+    }
+
+    .architecture-diagram .box {
+      display: inline-block;
+      background: white;
+      border: 2px solid var(--primary-color);
+      border-radius: 8px;
+      padding: 12px 20px;
+      margin: 10px;
+      font-weight: 500;
+    }
+
+    .architecture-diagram .arrow {
+      color: #666;
+      font-size: 1.5em;
+      margin: 0 10px;
+    }
+
+    .architecture-diagram .server-box {
+      border-color: var(--success-color);
+    }
+
+    .architecture-diagram .external-box {
+      border-color: #9333ea;
+    }
+  </style>
+</head>
+<body>
+  <a href="/" class="back-link">← Back to App</a>
+
+  <h1>Options Trade Tracker Help</h1>
+
+  <nav class="toc">
+    <h3>Contents</h3>
+    <ul>
+      <li><a href="#getting-started">Getting Started</a></li>
+      <li><a href="#adding-trades">Adding Trades</a></li>
+      <li><a href="#google-sync">Google Sheets Sync</a></li>
+      <li><a href="#schwab-integration">Schwab Integration</a></li>
+      <li><a href="#schwab-security">Schwab Security & Architecture</a></li>
+      <li><a href="#tips">Tips & Tricks</a></li>
+    </ul>
+  </nav>
+
+  <h2 id="getting-started">Getting Started</h2>
+
+  <h3>Creating a Service</h3>
+  <p>
+    A "Service" represents a trading advisory or strategy you're following (e.g., "Alpha Picks", "My Strategy").
+    Each service contains its own portfolio of positions.
+  </p>
+  <ol>
+    <li>Click <strong>+ Add Service</strong> on the main page</li>
+    <li>Enter a name for your service</li>
+    <li>Click <strong>Create</strong></li>
+  </ol>
+
+  <h3>Understanding the Dashboard</h3>
+  <p>The main dashboard shows:</p>
+  <ul>
+    <li><strong>Cost</strong> - Total premium paid/received for open positions</li>
+    <li><strong>Value</strong> - Current market value (if you've set marks)</li>
+    <li><strong>Current P&L</strong> - Unrealized profit/loss on open positions</li>
+    <li><strong>Closed P&L</strong> - Realized profit/loss from closed positions</li>
+  </ul>
+
+  <h2 id="adding-trades">Adding Trades</h2>
+
+  <h3>Copying from Thinkorswim</h3>
+  <p>
+    The easiest way to add trades is to copy the trade string from Thinkorswim:
+  </p>
+  <ol>
+    <li>Go to the <strong>Activity & Positions</strong> tab in Thinkorswim</li>
+    <li>Find your filled order in the <strong>Filled Orders</strong> section</li>
+    <li>Click the icon in the leftmost column of the order row</li>
+    <li>In the dialog that appears, copy the trade string</li>
+    <li>Paste it into the <strong>Add Trade</strong> field in the app</li>
+  </ol>
+
+  <div class="info-box">
+    <strong>Tip:</strong> You can optionally specify a Position # to add the trade to an existing position,
+    or leave it blank to create a new position.
+  </div>
+
+  <h3>Trade String Format</h3>
+  <p>The app parses trade strings in this format:</p>
+  <pre><code>BUY +2 VERTICAL SPY 100 17 JAN 25 600/605 CALL @2.50</code></pre>
+  <p>Components:</p>
+  <ul>
+    <li><code>BUY</code> or <code>SELL</code> - Action</li>
+    <li><code>+2</code> - Quantity (positive for buy, negative for sell)</li>
+    <li><code>VERTICAL</code> - Spread type</li>
+    <li><code>SPY</code> - Underlying symbol</li>
+    <li><code>100</code> - Multiplier (100 for standard options)</li>
+    <li><code>17 JAN 25</code> - Expiration date</li>
+    <li><code>600/605</code> - Strike prices</li>
+    <li><code>CALL</code> - Option type</li>
+    <li><code>@2.50</code> - Price per contract</li>
+  </ul>
+
+  <h2 id="google-sync">Google Sheets Sync</h2>
+
+  <p>
+    You can optionally sync your data to Google Sheets for backup and cross-device access.
+  </p>
+
+  <h3>Enabling Sync</h3>
+  <ol>
+    <li>Click the <strong>Settings</strong> (gear) icon</li>
+    <li>Click <strong>Sign in with Google</strong></li>
+    <li>After signing in, click <strong>Enable Cloud Sync</strong></li>
+    <li>A new Google Sheet will be created in your Google Drive</li>
+  </ol>
+
+  <div class="info-box">
+    <strong>Privacy:</strong> The spreadsheet is created in YOUR Google Drive. Only you can access it.
+    The app never stores your Google password.
+  </div>
+
+  <h2 id="schwab-integration">Schwab Integration</h2>
+
+  <p>
+    Connect your Schwab account to automatically fetch real-time Net Liquidation values for your positions.
+    This helps you track the current market value without manually entering marks.
+  </p>
+
+  <h3>Setting Up Schwab Integration</h3>
+  <ol>
+    <li>Click the <strong>Settings</strong> (gear) icon</li>
+    <li>Scroll to <strong>Schwab Integration</strong></li>
+    <li>Click <strong>Enable Schwab Integration</strong></li>
+    <li>Click <strong>Sign in to Schwab</strong></li>
+    <li>You'll be redirected to Schwab's login page</li>
+    <li>Log in with your Schwab credentials</li>
+    <li>Review and approve the access request</li>
+    <li>You'll be redirected back to the app with your accounts connected</li>
+  </ol>
+
+  <h3>Setting Account Nicknames</h3>
+  <p>
+    By default, accounts show as "MARGIN ****1234". You can set friendly nicknames:
+  </p>
+  <ol>
+    <li>Go to <strong>Settings → Schwab Integration</strong></li>
+    <li>Click on any account name</li>
+    <li>Type a nickname (e.g., "IRA", "Joint Account")</li>
+    <li>Press Enter or click Save</li>
+  </ol>
+
+  <h3>Linking Positions to Schwab</h3>
+  <ol>
+    <li>Expand a position by clicking on it</li>
+    <li>Find the <strong>Schwab</strong> dropdown</li>
+    <li>Select the account that holds this position</li>
+    <li>Click <strong>Refresh from Schwab</strong> to fetch current values</li>
+  </ol>
+
+  <div class="success-box">
+    <strong>Matching:</strong> The app matches your tracked positions to Schwab data by comparing
+    symbol, strike price, expiration date, and option type. If a match is found, the Net Liq
+    value is displayed.
+  </div>
+
+  <h3>Supported Symbols</h3>
+  <p>The app automatically handles these symbol variations:</p>
+  <table>
+    <tr>
+      <th>Your Position</th>
+      <th>Schwab Returns</th>
+      <th>Status</th>
+    </tr>
+    <tr>
+      <td>SPX</td>
+      <td>$SPX</td>
+      <td>✓ Auto-matched</td>
+    </tr>
+    <tr>
+      <td>SPXW</td>
+      <td>SPX</td>
+      <td>✓ Auto-matched</td>
+    </tr>
+    <tr>
+      <td>RUTW</td>
+      <td>RUT</td>
+      <td>✓ Auto-matched</td>
+    </tr>
+    <tr>
+      <td>NDXW / NDXP</td>
+      <td>NDX</td>
+      <td>✓ Auto-matched</td>
+    </tr>
+  </table>
+
+  <h2 id="schwab-security">Schwab Security & Architecture</h2>
+
+  <p>
+    The Schwab integration is designed with security as a top priority. Here's how it works
+    and why your data is safe.
+  </p>
+
+  <h3>How Authentication Works</h3>
+
+  <div class="architecture-diagram">
+    <div class="box">Your Browser</div>
+    <span class="arrow">→</span>
+    <div class="box external-box">Schwab Login</div>
+    <span class="arrow">→</span>
+    <div class="box server-box">Vercel Server</div>
+    <span class="arrow">→</span>
+    <div class="box external-box">Schwab API</div>
+  </div>
+
+  <p>The app uses <strong>OAuth 2.0 with PKCE</strong> (Proof Key for Code Exchange), the industry standard for secure authentication:</p>
+
+  <ol>
+    <li><strong>You click "Sign in to Schwab"</strong> - The app redirects you to Schwab's official login page</li>
+    <li><strong>You log in at Schwab</strong> - Your password is entered directly on Schwab's website, never in our app</li>
+    <li><strong>Schwab asks for your approval</strong> - You explicitly authorize read-only access to your accounts</li>
+    <li><strong>Schwab sends a temporary code</strong> - This code is exchanged for access tokens via our secure server</li>
+    <li><strong>Tokens are stored locally</strong> - Access tokens are stored in your browser's localStorage, not on any server</li>
+  </ol>
+
+  <h3>Security Features</h3>
+
+  <table>
+    <tr>
+      <th>Feature</th>
+      <th>Benefit</th>
+    </tr>
+    <tr>
+      <td><strong>OAuth 2.0 + PKCE</strong></td>
+      <td>Your Schwab password is never seen or stored by the app</td>
+    </tr>
+    <tr>
+      <td><strong>Read-Only Access</strong></td>
+      <td>The app can only VIEW your positions, never place trades or move money</td>
+    </tr>
+    <tr>
+      <td><strong>Token Stored Locally</strong></td>
+      <td>Your access token stays in your browser, not on our servers</td>
+    </tr>
+    <tr>
+      <td><strong>Serverless Token Exchange</strong></td>
+      <td>API credentials are kept secure on the server, never exposed to browsers</td>
+    </tr>
+    <tr>
+      <td><strong>Revocable Access</strong></td>
+      <td>You can disconnect at any time via Settings or your Schwab account</td>
+    </tr>
+    <tr>
+      <td><strong>No Data Storage</strong></td>
+      <td>Position data is fetched on-demand and cached temporarily in your browser only</td>
+    </tr>
+  </table>
+
+  <h3>What the App CAN'T Do</h3>
+  <ul>
+    <li>❌ See your Schwab password</li>
+    <li>❌ Place trades or orders</li>
+    <li>❌ Transfer money</li>
+    <li>❌ Access your full account number</li>
+    <li>❌ Store your data on external servers</li>
+  </ul>
+
+  <h3>What the App CAN Do</h3>
+  <ul>
+    <li>✓ View your option positions</li>
+    <li>✓ Read current market values (Net Liq)</li>
+    <li>✓ See masked account numbers (****1234)</li>
+  </ul>
+
+  <div class="warning-box">
+    <strong>Revoking Access:</strong> You can revoke the app's access at any time by:
+    <ol style="margin-bottom: 0;">
+      <li>Going to Settings in the app and clicking "Sign Out" from Schwab, or</li>
+      <li>Visiting your Schwab account settings and removing the app's authorization</li>
+    </ol>
+  </div>
+
+  <h3>Technical Architecture</h3>
+
+  <pre><code>┌─────────────────┐      ┌─────────────────┐      ┌─────────────────┐
+│   Your Browser  │      │  Vercel Server  │      │   Schwab API    │
+│   (Frontend)    │      │  (Serverless)   │      │   (External)    │
+└────────┬────────┘      └────────┬────────┘      └────────┬────────┘
+         │                        │                        │
+         │ 1. Click Sign In       │                        │
+         │───────────────────────────────────────────────▶│
+         │                        │    Redirect to Schwab  │
+         │                        │                        │
+         │ 2. User logs in & approves                      │
+         │◀───────────────────────────────────────────────│
+         │    Redirect with auth code                      │
+         │                        │                        │
+         │ 3. Send auth code      │                        │
+         │───────────────────────▶│                        │
+         │                        │ 4. Exchange for tokens │
+         │                        │───────────────────────▶│
+         │                        │◀───────────────────────│
+         │ 5. Return tokens       │    Access + Refresh    │
+         │◀───────────────────────│                        │
+         │                        │                        │
+         │ 6. Fetch positions (with token)                 │
+         │───────────────────────────────────────────────▶│
+         │◀───────────────────────────────────────────────│
+         │    Position data                                │
+</code></pre>
+
+  <p>
+    <strong>Key Point:</strong> The Schwab API credentials (Client ID and Secret) are stored securely
+    on the Vercel server as environment variables. They are NEVER sent to or accessible from your browser.
+    The browser only receives temporary access tokens after you authenticate.
+  </p>
+
+  <h2 id="tips">Tips & Tricks</h2>
+
+  <h3>Keyboard Shortcuts</h3>
+  <ul>
+    <li><strong>Enter</strong> - Submit trade when in the trade input field</li>
+    <li><strong>Escape</strong> - Cancel editing (nicknames, marks, etc.)</li>
+  </ul>
+
+  <h3>Mark-to-Market</h3>
+  <p>
+    For positions not linked to Schwab, you can manually set a "mark" (current market value):
+  </p>
+  <ol>
+    <li>Expand a position</li>
+    <li>Click <strong>Set Mark</strong> or <strong>Update</strong> in the Mark-to-Market section</li>
+    <li>Enter the current Net Liq value</li>
+    <li>Click Save</li>
+  </ol>
+
+  <div class="info-box">
+    <strong>Tip:</strong> If you have Schwab connected and have fetched positions, the mark input
+    will pre-populate with the Schwab Net Liq value for easy one-click updates.
+  </div>
+
+  <h3>Position Status Colors</h3>
+  <ul>
+    <li><span style="color: #dc2626;">Red background</span> - Position has expired options that need attention</li>
+    <li><span style="color: #16a34a;">Green values</span> - Profit / positive value</li>
+    <li><span style="color: #dc2626;">Red values</span> - Loss / negative value</li>
+  </ul>
+
+  <h3>Data Backup</h3>
+  <p>
+    Your data is stored locally in your browser. To ensure you don't lose it:
+  </p>
+  <ul>
+    <li><strong>Enable Google Sync</strong> - Automatically backs up to Google Sheets</li>
+    <li><strong>Export regularly</strong> - Settings → Export creates a JSON backup file</li>
+  </ul>
+
+  <hr style="margin-top: 40px;">
+
+  <p style="text-align: center; color: #666;">
+    Options Trade Tracker v1.13 ·
+    <a href="/privacy-policy.html">Privacy Policy</a>
+  </p>
+</body>
+</html>
