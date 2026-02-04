@@ -131,11 +131,11 @@ export async function signIn(): Promise<void> {
   localStorage.setItem(PKCE_VERIFIER_KEY, codeVerifier);
 
   // Build authorization URL
+  // Note: scope parameter removed - was causing Schwab to reject requests
   const params = new URLSearchParams({
     client_id: SCHWAB_CLIENT_ID,
     redirect_uri: REDIRECT_URI,
     response_type: 'code',
-    scope: 'readonly', // Read-only access to accounts and positions
     code_challenge: codeChallenge,
     code_challenge_method: 'S256',
   });
