@@ -8,7 +8,8 @@ import type { Position } from '../types/trade';
 // ============================================================================
 
 const SCHWAB_CLIENT_ID = import.meta.env.VITE_SCHWAB_CLIENT_ID || '';
-const REDIRECT_URI = `${window.location.origin}/auth/schwab/callback`;
+// Must match exactly what's registered in Schwab developer portal (no www)
+const REDIRECT_URI = 'https://cleared4theoption.com/auth/schwab/callback';
 
 // Schwab OAuth endpoints
 const SCHWAB_AUTH_URL = 'https://api.schwabapi.com/v1/oauth/authorize';
