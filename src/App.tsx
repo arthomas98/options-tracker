@@ -285,6 +285,7 @@ function App() {
       <div className="max-w-4xl mx-auto px-6 py-3 flex justify-between items-center">
         <SyncStatusIndicator />
         <div className="flex items-center gap-3">
+          <SchwabRefreshButton />
           <a
             href="/help.html"
             target="_blank"
