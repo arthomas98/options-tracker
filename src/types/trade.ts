@@ -65,6 +65,7 @@ export interface Position {
   isTaxable?: boolean;      // Whether P&L is taxable (default true)
   // Schwab integration
   schwabAccountId?: string; // Which Schwab account this position is in
+  autoMarkToMarket?: boolean; // Auto-update mark when Schwab refreshes
 }
 
 export interface Portfolio {

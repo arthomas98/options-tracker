@@ -432,6 +432,20 @@ export function updatePositionSchwabAccount(
   return { ...portfolio, positions: updatedPositions };
 }
 
+export function updatePositionAutoMarkToMarket(
+  portfolio: Portfolio,
+  positionId: number,
+  autoMarkToMarket: boolean
+): Portfolio {
+  const updatedPositions = portfolio.positions.map((pos) =>
+    pos.id === positionId
+      ? { ...pos, autoMarkToMarket }
+      : pos
+  );
+
+  return { ...portfolio, positions: updatedPositions };
+}
+
 export function rebuildTradeHistoryFromTrades(appData: AppData): AppData {
   const tradeHistory: TradeStringEntry[] = [];
 

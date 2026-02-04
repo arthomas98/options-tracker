@@ -239,6 +239,44 @@ export function SchwabProvider({ children }: { children: ReactNode }) {
     return account.nickname || account.displayName;
   }, [accounts]);
 
+  // Auto-refresh every 5 minutes when signed in and tab is visible
+  useEffect(() => {
+    if (!isEnabled || !isSignedIn || accounts.length === 0) {
+      return;
+    }
+
+    const REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes
+
+    const doRefresh = () => {
+      // Only refresh if tab is visible
+      if (document.visibilityState === 'visible') {
+        refreshAllPositions().catch(err => {
+          console.error('Auto-refresh failed:', err);
+        });
+      }
+    };
+
+    // Set up interval
+    const intervalId = setInterval(doRefresh, REFRESH_INTERVAL);
+
+    // Also refresh when tab becomes visible (if enough time has passed)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && lastRefresh) {
+        const timeSinceRefresh = Date.now() - lastRefresh.getTime();
+        if (timeSinceRefresh >= REFRESH_INTERVAL) {
+          doRefresh();
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isEnabled, isSignedIn, accounts.length, refreshAllPositions, lastRefresh]);
+
   return (
     <SchwabContext.Provider
       value={{

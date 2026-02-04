@@ -15,6 +15,7 @@ import {
   updatePositionDates,
   updatePositionTaxable,
   updatePositionSchwabAccount,
+  updatePositionAutoMarkToMarket,
   addTradeHistoryEntry,
   getTradeHistoryForService,
   movePosition,
@@ -679,6 +680,35 @@ function ServiceDetailPage({ service, appData, onBack, onUpdatePortfolio, onRena
     onUpdatePortfolio(portfolio);
   }, [portfolio, onUpdatePortfolio]);
 
+  // Schwab context for auto-update
+  const { lastRefresh: schwabLastRefresh, getNetLiqForPosition, isEnabled: schwabEnabled, isSignedIn: schwabSignedIn } = useSchwab();
+
+  // Auto-update marks when Schwab refreshes
+  useEffect(() => {
+    if (!schwabLastRefresh || !schwabEnabled || !schwabSignedIn) return;
+
+    // Find positions with autoMarkToMarket enabled
+    const positionsToUpdate = portfolio.positions.filter(
+      (pos) => pos.isOpen && pos.autoMarkToMarket && pos.schwabAccountId
+    );
+
+    if (positionsToUpdate.length === 0) return;
+
+    // Update marks for each position
+    let updatedPortfolio = portfolio;
+    for (const position of positionsToUpdate) {
+      const schwabResult = getNetLiqForPosition(position);
+      if (schwabResult && schwabResult.netLiq !== null) {
+        updatedPortfolio = updatePositionMark(updatedPortfolio, position.id, schwabResult.netLiq, 'schwab');
+      }
+    }
+
+    // Only update if something changed
+    if (updatedPortfolio !== portfolio) {
+      setPortfolio(updatedPortfolio);
+    }
+  }, [schwabLastRefresh]); // Only re-run when lastRefresh changes
+
   const handleAddTrade = () => {
     if (!tradeInput.trim()) return;
 
@@ -786,6 +816,10 @@ function ServiceDetailPage({ service, appData, onBack, onUpdatePortfolio, onRena
 
   const handleUpdateSchwabAccount = (positionId: number, schwabAccountId: string | undefined) => {
     setPortfolio(updatePositionSchwabAccount(portfolio, positionId, schwabAccountId));
+  };
+
+  const handleUpdateAutoMarkToMarket = (positionId: number, autoMarkToMarket: boolean) => {
+    setPortfolio(updatePositionAutoMarkToMarket(portfolio, positionId, autoMarkToMarket));
   };
 
   // Services available to move positions to (excluding current service)
@@ -1028,6 +1062,7 @@ function ServiceDetailPage({ service, appData, onBack, onUpdatePortfolio, onRena
                 onUpdateDates={(openDate, closeDate) => handleUpdateDates(position.id, openDate, closeDate)}
                 onUpdateTaxable={(isTaxable) => handleUpdateTaxable(position.id, isTaxable)}
                 onUpdateSchwabAccount={(schwabAccountId) => handleUpdateSchwabAccount(position.id, schwabAccountId)}
+                onUpdateAutoMarkToMarket={(autoMarkToMarket) => handleUpdateAutoMarkToMarket(position.id, autoMarkToMarket)}
               />
             ))
           )}
@@ -1194,6 +1229,7 @@ interface PositionCardProps {
   onUpdateDates: (openDate?: Date, closeDate?: Date) => void;
   onUpdateTaxable: (isTaxable: boolean) => void;
   onUpdateSchwabAccount: (schwabAccountId: string | undefined) => void;
+  onUpdateAutoMarkToMarket: (autoMarkToMarket: boolean) => void;
 }
 
 // Helper to aggregate legs across all trades in a position
@@ -1253,6 +1289,7 @@ function PositionCard({
   onUpdateDates,
   onUpdateTaxable,
   onUpdateSchwabAccount,
+  onUpdateAutoMarkToMarket,
 }: PositionCardProps) {
   const summary = getPositionSummary(position);
   const markInfo = getMarkInfo(position);
@@ -1691,6 +1728,23 @@ function PositionCard({
                   </div>
                 )}
               </div>
+              {/* Auto-update checkbox (only show when Schwab account is linked) */}
+              {position.schwabAccountId && schwabEnabled && schwabSignedIn && (
+                <div className="mt-2 flex items-center gap-2">
+                  <label className="flex items-center gap-1.5 cursor-pointer" onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={position.autoMarkToMarket || false}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        onUpdateAutoMarkToMarket(e.target.checked);
+                      }}
+                      className="w-3 h-3"
+                    />
+                    <span className="text-xs text-gray-600">Auto-update from Schwab</span>
+                  </label>
+                </div>
+              )}
             </div>
           )}
 
