@@ -244,6 +244,29 @@ function App() {
     }
   }, [selectedServiceId, handleRenameService]);
 
+  // Sync Schwab account nicknames with appData (persisted to Google Sheet)
+  const { accountNicknames, loadNicknamesFromExternal, accounts: schwabAccounts } = useSchwab();
+
+  // Load nicknames from appData when it becomes available
+  useEffect(() => {
+    if (appData.schwabAccountNicknames) {
+      loadNicknamesFromExternal(appData.schwabAccountNicknames);
+    }
+  }, [appData.schwabAccountNicknames, loadNicknamesFromExternal]);
+
+  // Save nicknames to appData when they change
+  useEffect(() => {
+    // Only save if we have accounts and there are nicknames to save
+    if (schwabAccounts.length > 0 && Object.keys(accountNicknames).length > 0) {
+      // Check if nicknames have changed
+      const existingNicknames = appData.schwabAccountNicknames || {};
+      const hasChanges = JSON.stringify(existingNicknames) !== JSON.stringify(accountNicknames);
+      if (hasChanges) {
+        setAppData((prev) => ({ ...prev, schwabAccountNicknames: accountNicknames }));
+      }
+    }
+  }, [accountNicknames, schwabAccounts.length]);
+
   // Loading state
   if (isLoading || authLoading) {
     return (

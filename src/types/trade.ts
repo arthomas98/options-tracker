@@ -94,6 +94,7 @@ export interface AppData {
   services: Service[];
   appTitle?: string;
   tradeHistory?: TradeStringEntry[];
+  schwabAccountNicknames?: Record<string, string>; // accountId -> nickname
 }
 
 export interface PositionSummary {

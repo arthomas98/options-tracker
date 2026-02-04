@@ -15,6 +15,7 @@ interface SchwabContextType {
 
   // Account data
   accounts: SchwabAccount[];
+  accountNicknames: Record<string, string>; // For syncing to external storage
 
   // Cached positions
   positionsCache: Map<string, SchwabAccountPositions>;
@@ -27,6 +28,7 @@ interface SchwabContextType {
   signIn: () => Promise<void>;
   signOut: () => void;
   updateAccountNickname: (accountId: string, nickname: string) => void;
+  loadNicknamesFromExternal: (nicknames: Record<string, string>) => void;
 
   // Data fetching
   refreshAllPositions: () => Promise<void>;
@@ -239,6 +241,35 @@ export function SchwabProvider({ children }: { children: ReactNode }) {
     return account.nickname || account.displayName;
   }, [accounts]);
 
+  // Get all nicknames as a record for external storage sync
+  const accountNicknames: Record<string, string> = {};
+  for (const account of accounts) {
+    if (account.nickname) {
+      accountNicknames[account.accountId] = account.nickname;
+    }
+  }
+
+  // Load nicknames from external storage (e.g., appData/Google Sheet)
+  const loadNicknamesFromExternal = useCallback((nicknames: Record<string, string>) => {
+    if (!nicknames || Object.keys(nicknames).length === 0) return;
+
+    const updatedAccounts = accounts.map(account => {
+      const externalNickname = nicknames[account.accountId];
+      // Only apply if account doesn't already have a nickname and external has one
+      if (!account.nickname && externalNickname) {
+        return { ...account, nickname: externalNickname };
+      }
+      return account;
+    });
+
+    // Only update if something changed
+    const hasChanges = updatedAccounts.some((acc, i) => acc.nickname !== accounts[i].nickname);
+    if (hasChanges) {
+      setAccounts(updatedAccounts);
+      saveSettings(isEnabled, updatedAccounts);
+    }
+  }, [accounts, isEnabled, saveSettings]);
+
   // Auto-refresh every 5 minutes when signed in and tab is visible
   useEffect(() => {
     if (!isEnabled || !isSignedIn || accounts.length === 0) {
@@ -285,6 +316,7 @@ export function SchwabProvider({ children }: { children: ReactNode }) {
         isLoading,
         authError,
         accounts,
+        accountNicknames,
         positionsCache,
         lastRefresh,
         isRefreshing,
@@ -293,6 +325,7 @@ export function SchwabProvider({ children }: { children: ReactNode }) {
         signIn,
         signOut,
         updateAccountNickname,
+        loadNicknamesFromExternal,
         refreshAllPositions,
         getNetLiqForPosition,
         getAccountDisplayName,
