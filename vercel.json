@@ -1,12 +1,4 @@
 {
-  "redirects": [
-    {
-      "source": "/:path*",
-      "has": [{ "type": "host", "value": "www.cleared4theoption.com" }],
-      "destination": "https://cleared4theoption.com/:path*",
-      "permanent": true
-    }
-  ],
   "rewrites": [
     { "source": "/app", "destination": "/app.html" },
     { "source": "/auth/schwab/callback", "destination": "/app.html" }
