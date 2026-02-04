@@ -27,13 +27,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   params.append('client_id', clientId);
 
   if (grant_type === 'authorization_code') {
-    if (!code || !redirect_uri || !code_verifier) {
+    if (!code || !redirect_uri) {
       return res.status(400).json({ error: 'Missing required parameters for authorization_code grant' });
     }
     params.append('grant_type', 'authorization_code');
     params.append('code', code);
     params.append('redirect_uri', redirect_uri);
-    params.append('code_verifier', code_verifier);
+    // Only include code_verifier if provided (PKCE flow)
+    if (code_verifier) {
+      params.append('code_verifier', code_verifier);
+    }
   } else if (grant_type === 'refresh_token') {
     if (!refresh_token) {
       return res.status(400).json({ error: 'Missing refresh_token parameter' });

@@ -123,21 +123,10 @@ export async function signIn(): Promise<void> {
     throw new Error('Schwab API is not configured. Set VITE_SCHWAB_CLIENT_ID environment variable.');
   }
 
-  // Generate PKCE code verifier and challenge
-  const codeVerifier = generateRandomString(64);
-  const codeChallenge = await generateCodeChallenge(codeVerifier);
-
-  // Store verifier for later use in token exchange
-  localStorage.setItem(PKCE_VERIFIER_KEY, codeVerifier);
-
-  // Build authorization URL
-  // Note: scope parameter removed - was causing Schwab to reject requests
+  // Build authorization URL (simple OAuth without PKCE)
   const params = new URLSearchParams({
     client_id: SCHWAB_CLIENT_ID,
     redirect_uri: REDIRECT_URI,
-    response_type: 'code',
-    code_challenge: codeChallenge,
-    code_challenge_method: 'S256',
   });
 
   // Redirect to Schwab authorization page
@@ -145,11 +134,6 @@ export async function signIn(): Promise<void> {
 }
 
 export async function handleOAuthCallback(authCode: string): Promise<void> {
-  const codeVerifier = localStorage.getItem(PKCE_VERIFIER_KEY);
-  if (!codeVerifier) {
-    throw new Error('PKCE verifier not found. Please try signing in again.');
-  }
-
   // Exchange authorization code for tokens via our serverless function
   const response = await fetch(TOKEN_PROXY_URL, {
     method: 'POST',
@@ -160,7 +144,6 @@ export async function handleOAuthCallback(authCode: string): Promise<void> {
       grant_type: 'authorization_code',
       code: authCode,
       redirect_uri: REDIRECT_URI,
-      code_verifier: codeVerifier,
     }),
   });
 
