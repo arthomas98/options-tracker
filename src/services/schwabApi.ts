@@ -1,4 +1,4 @@
-// Schwab API Service with OAuth PKCE Flow
+// Schwab API Service with OAuth Flow
 // Implements real Schwab Trader API integration
 
 import type { Position } from '../types/trade';
@@ -19,7 +19,6 @@ const TOKEN_PROXY_URL = '/api/schwab-token';
 
 // Storage keys
 const TOKEN_STORAGE_KEY = 'schwab-tokens';
-const PKCE_VERIFIER_KEY = 'schwab-pkce-verifier';
 
 // ============================================================================
 // Types
@@ -56,26 +55,6 @@ export interface SchwabAccountPositions {
 }
 
 // ============================================================================
-// PKCE Utilities
-// ============================================================================
-
-function generateRandomString(length: number): string {
-  const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
-  const randomValues = new Uint8Array(length);
-  crypto.getRandomValues(randomValues);
-  return Array.from(randomValues, (v) => charset[v % charset.length]).join('');
-}
-
-async function generateCodeChallenge(verifier: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(verifier);
-  const digest = await crypto.subtle.digest('SHA-256', data);
-  const base64 = btoa(String.fromCharCode(...new Uint8Array(digest)));
-  // Convert to base64url format
-  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}
-
-// ============================================================================
 // Token Management
 // ============================================================================
 
@@ -97,7 +76,6 @@ function storeTokens(tokens: TokenData): void {
 
 function clearTokens(): void {
   localStorage.removeItem(TOKEN_STORAGE_KEY);
-  localStorage.removeItem(PKCE_VERIFIER_KEY);
 }
 
 function isTokenExpired(tokens: TokenData): boolean {
@@ -167,7 +145,6 @@ export async function handleOAuthCallback(authCode: string): Promise<void> {
   };
 
   storeTokens(tokens);
-  localStorage.removeItem(PKCE_VERIFIER_KEY);
 }
 
 async function refreshAccessToken(): Promise<void> {
