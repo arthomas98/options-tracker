@@ -87,6 +87,7 @@ export function loadAppData(): AppData {
         services: data.services.map(rehydrateService),
         appTitle: data.appTitle,
         tradeHistory: rehydrateTradeHistory(data.tradeHistory),
+        schwabAccountNicknames: data.schwabAccountNicknames,
       };
     }
   } catch (error) {

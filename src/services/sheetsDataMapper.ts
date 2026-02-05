@@ -41,6 +41,7 @@ export interface PositionRow {
   isOpen: boolean;
   openDate: string; // ISO date string
   closeDate: string; // ISO date string or empty
+  autoMarkToMarket?: boolean;
 }
 
 export interface TradeRow {
@@ -85,7 +86,7 @@ export interface TradeHistoryRow {
 export const HEADERS = {
   metadata: ['key', 'value'],
   services: ['id', 'name', 'createdAt', 'nextPositionId'],
-  positions: ['id', 'serviceId', 'symbol', 'structure', 'isOpen', 'openDate', 'closeDate', 'markValue', 'markDate', 'markSource', 'isTaxable', 'schwabAccountId'],
+  positions: ['id', 'serviceId', 'symbol', 'structure', 'isOpen', 'openDate', 'closeDate', 'markValue', 'markDate', 'markSource', 'isTaxable', 'schwabAccountId', 'autoMarkToMarket'],
   trades: [
     'id', 'positionId', 'serviceId', 'rawInput', 'action', 'totalQuantity',
     'symbol', 'multiplier', 'isWeekly', 'spreadType', 'price', 'orderType',
@@ -166,6 +167,7 @@ export function appDataToSheetRows(data: AppData): {
         position.markSource ?? '',
         boolToString(position.isTaxable === true), // Default to false
         position.schwabAccountId ?? '',
+        boolToString(position.autoMarkToMarket === true),
       ]);
 
       // Trades for this position
@@ -350,6 +352,7 @@ export function sheetRowsToAppData(
       markSource: row[9] ? (row[9] as MarkSource) : undefined,
       isTaxable: row[10] !== undefined && row[10] !== '' ? stringToBool(String(row[10])) : false, // Default to false
       schwabAccountId: row[11] ? String(row[11]) : undefined,
+      autoMarkToMarket: row[12] !== undefined && row[12] !== '' ? stringToBool(String(row[12])) : false,
     };
 
     if (!positionsByServiceId.has(serviceId)) {
