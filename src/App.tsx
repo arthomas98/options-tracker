@@ -270,8 +270,9 @@ function App() {
   // One-time migration: enable autoMarkToMarket for positions that have a Schwab account linked
   // Uses localStorage flag to only run once ever
   useEffect(() => {
-    const migrationKey = 'autoMarkToMarket-migration-v1';
+    const migrationKey = 'autoMarkToMarket-migration-v2';
     if (localStorage.getItem(migrationKey)) return; // Already ran
+    if (appData.services.length === 0) return; // Wait for data to load
 
     let hasChanges = false;
     const updatedServices = appData.services.map(service => {
@@ -293,9 +294,9 @@ function App() {
       setAppData(prev => ({ ...prev, services: updatedServices }));
     }
 
-    // Mark migration as complete
+    // Mark migration as complete only if we had data to process
     localStorage.setItem(migrationKey, 'true');
-  }, []); // Run once on mount
+  }, [appData.services]); // Re-run when services load
 
   // Loading state
   if (isLoading || authLoading) {
