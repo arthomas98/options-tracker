@@ -907,8 +907,6 @@ function ServiceDetailPage({ service, appData, onBack, onUpdatePortfolio, onRena
               onSave={onRenameService}
             />
           </h1>
-          <div className="flex-1" />
-          <SchwabRefreshButton />
         </div>
 
         {/* Portfolio Summary */}
