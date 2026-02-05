@@ -287,7 +287,7 @@ function App() {
   // One-time migration: enable autoMarkToMarket for positions that have a Schwab account linked
   // Uses localStorage flag to only run once ever
   useEffect(() => {
-    const migrationKey = 'autoMarkToMarket-migration-v2';
+    const migrationKey = 'autoMarkToMarket-migration-v3'; // v3: uses immediate sync
     if (localStorage.getItem(migrationKey)) return; // Already ran
     if (appData.services.length === 0) return; // Wait for data to load
 
@@ -308,12 +308,19 @@ function App() {
     });
 
     if (hasChanges) {
-      setAppData(prev => ({ ...prev, services: updatedServices }));
+      // Use immediate sync to ensure migration data is saved to cloud right away
+      console.log('[MIGRATION] Running autoMarkToMarket migration v3...');
+      const updatedData = { ...appData, services: updatedServices };
+      (async () => {
+        await setAppDataImmediate(updatedData);
+        console.log('[MIGRATION] Migration v3 completed and synced');
+        localStorage.setItem(migrationKey, 'true');
+      })();
+    } else {
+      // No changes needed, just mark as complete
+      localStorage.setItem(migrationKey, 'true');
     }
-
-    // Mark migration as complete only if we had data to process
-    localStorage.setItem(migrationKey, 'true');
-  }, [appData.services]); // Re-run when services load
+  }, [appData.services, setAppDataImmediate]); // Re-run when services load
 
   // Loading state
   if (isLoading || authLoading) {
