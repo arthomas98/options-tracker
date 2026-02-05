@@ -167,7 +167,7 @@ function ClosedPnLDisplay({ closedPnL, selectedPeriod, onPeriodChange, compact =
 }
 
 function App() {
-  const { appData: storedAppData, updateAppData, isLoading, hasPendingMigration } = useStorage();
+  const { appData: storedAppData, updateAppData, updateAppDataImmediate, isLoading, hasPendingMigration } = useStorage();
   const { isSignedIn, isConfigured, signIn, isLoading: authLoading } = useAuth();
 
   const [currentPage, setCurrentPage] = useState<Page>('summary');
@@ -197,6 +197,12 @@ function App() {
       updateAppData(newData);
     }
   }, [updateAppData]);
+
+  // Immediate sync version for critical operations (trade entry)
+  const setAppDataImmediate = useCallback(async (newData: AppData | ((prev: AppData) => AppData)) => {
+    const data = typeof newData === 'function' ? newData(appDataRef.current) : newData;
+    await updateAppDataImmediate(data);
+  }, [updateAppDataImmediate]);
 
   const handleSelectService = (serviceId: string) => {
     setSelectedServiceId(serviceId);
@@ -230,6 +236,11 @@ function App() {
     setAppData((prev) => updateService(prev, serviceId, portfolio));
   }, [setAppData]);
 
+  // Immediate sync version for critical operations
+  const handleUpdatePortfolioImmediate = useCallback(async (serviceId: string, portfolio: Portfolio) => {
+    await setAppDataImmediate((prev) => updateService(prev, serviceId, portfolio));
+  }, [setAppDataImmediate]);
+
   const selectedService = appData.services.find((s) => s.id === selectedServiceId);
 
   const handleUpdateSelectedServicePortfolio = useCallback((portfolio: Portfolio) => {
@@ -237,6 +248,12 @@ function App() {
       handleUpdatePortfolio(selectedServiceId, portfolio);
     }
   }, [selectedServiceId, handleUpdatePortfolio]);
+
+  const handleUpdateSelectedServicePortfolioImmediate = useCallback(async (portfolio: Portfolio) => {
+    if (selectedServiceId) {
+      await handleUpdatePortfolioImmediate(selectedServiceId, portfolio);
+    }
+  }, [selectedServiceId, handleUpdatePortfolioImmediate]);
 
   const handleRenameSelectedService = useCallback((newName: string) => {
     if (selectedServiceId) {
@@ -363,6 +380,7 @@ function App() {
           appData={appData}
           onBack={handleBackToSummary}
           onUpdatePortfolio={handleUpdateSelectedServicePortfolio}
+          onUpdatePortfolioImmediate={handleUpdateSelectedServicePortfolioImmediate}
           onRenameService={handleRenameSelectedService}
           onUpdateAppData={setAppData}
         />
@@ -713,11 +731,12 @@ interface ServiceDetailPageProps {
   appData: AppData;
   onBack: () => void;
   onUpdatePortfolio: (portfolio: Portfolio) => void;
+  onUpdatePortfolioImmediate: (portfolio: Portfolio) => Promise<void>;
   onRenameService: (newName: string) => void;
   onUpdateAppData: (appData: AppData) => void;
 }
 
-function ServiceDetailPage({ service, appData, onBack, onUpdatePortfolio, onRenameService, onUpdateAppData }: ServiceDetailPageProps) {
+function ServiceDetailPage({ service, appData, onBack, onUpdatePortfolio, onUpdatePortfolioImmediate, onRenameService, onUpdateAppData }: ServiceDetailPageProps) {
   const [portfolio, setPortfolio] = useState<Portfolio>(service.portfolio);
   const [tradeInput, setTradeInput] = useState('');
   const [positionIdInput, setPositionIdInput] = useState('');
@@ -764,7 +783,7 @@ function ServiceDetailPage({ service, appData, onBack, onUpdatePortfolio, onRena
     }
   }, [schwabLastRefresh]); // Only re-run when lastRefresh changes
 
-  const handleAddTrade = () => {
+  const handleAddTrade = async () => {
     if (!tradeInput.trim()) return;
 
     try {
@@ -797,6 +816,12 @@ function ServiceDetailPage({ service, appData, onBack, onUpdatePortfolio, onRena
       // Save to trade history (successful parse)
       const updatedAppData = addTradeHistoryEntry(appData, service.id, tradeInput.trim(), positionId);
       onUpdateAppData(updatedAppData);
+
+      // CRITICAL: Force immediate sync to Google Sheets for trade entry
+      // This prevents data loss if the user refreshes before debounced sync completes
+      console.log('[TRADE] Trade entered, triggering immediate sync...');
+      await onUpdatePortfolioImmediate(updatedPortfolio);
+      console.log('[TRADE] Immediate sync completed');
 
       setTradeInput('');
       setPositionIdInput('');

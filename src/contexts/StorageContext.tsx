@@ -16,6 +16,19 @@ import { syncManager, type SyncState, type SyncStatus, type ConflictInfo } from 
 import { readAppData, getStoredSpreadsheetId, type SpreadsheetInfo } from '../services/googleSheets';
 import { googleAuth } from '../services/googleAuth';
 
+// Debug logging
+const DEBUG_STORAGE = true;
+function storageLog(message: string, data?: unknown): void {
+  if (DEBUG_STORAGE) {
+    const timestamp = new Date().toISOString().split('T')[1].slice(0, 12);
+    if (data !== undefined) {
+      console.log(`[STORAGE ${timestamp}] ${message}`, data);
+    } else {
+      console.log(`[STORAGE ${timestamp}] ${message}`);
+    }
+  }
+}
+
 // Helper to check if an error is an authentication error (401)
 function isAuthError(err: unknown): boolean {
   // Check GAPI error format: { status: 401, result: { error: { code: 401, status: 'UNAUTHENTICATED' } } }
@@ -53,6 +66,7 @@ export interface StorageContextValue {
 
   // Operations
   updateAppData: (data: AppData) => void;
+  updateAppDataImmediate: (data: AppData) => Promise<void>; // Force immediate sync (for critical changes like trade entry)
   refreshFromCloud: () => Promise<void>;
 
   // Sync state
@@ -113,6 +127,22 @@ export function StorageProvider({ children }: StorageProviderProps) {
       });
       return 'local';
     });
+  }, []);
+
+  // Warn user if they try to close/refresh with pending changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (syncManager.hasPendingChanges()) {
+        storageLog('WARNING: User trying to leave with pending changes!');
+        // Modern browsers require both of these for the warning to show
+        e.preventDefault();
+        e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+        return e.returnValue;
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, []);
 
   // Helper to count actual data (not just empty services)
@@ -205,16 +235,35 @@ export function StorageProvider({ children }: StorageProviderProps) {
     loadData();
   }, [authLoading, isSignedIn, isMigrating]);
 
-  // Update data handler
+  // Update data handler (debounced sync)
   const updateAppData = useCallback((data: AppData) => {
+    storageLog('updateAppData called (debounced sync)');
     setAppData(data);
 
     // Always save to localStorage (primary storage)
     saveAppData(data);
+    storageLog('Saved to localStorage');
 
     // If cloud sync is enabled, schedule sync
     if (cloudSyncEnabled && isSignedIn) {
       syncManager.scheduleSync(data);
+    }
+  }, [cloudSyncEnabled, isSignedIn]);
+
+  // Update data handler with immediate sync (for critical changes like trade entry)
+  const updateAppDataImmediate = useCallback(async (data: AppData) => {
+    storageLog('updateAppDataImmediate called (immediate sync)');
+    setAppData(data);
+
+    // Always save to localStorage (primary storage)
+    saveAppData(data);
+    storageLog('Saved to localStorage');
+
+    // If cloud sync is enabled, force immediate sync
+    if (cloudSyncEnabled && isSignedIn) {
+      storageLog('Triggering immediate sync to Google Sheets...');
+      await syncManager.forceSync(data);
+      storageLog('Immediate sync completed');
     }
   }, [cloudSyncEnabled, isSignedIn]);
 
@@ -300,6 +349,7 @@ export function StorageProvider({ children }: StorageProviderProps) {
     isLoading: isLoading || authLoading,
 
     updateAppData,
+    updateAppDataImmediate,
     refreshFromCloud,
 
     syncStatus: syncState.status,

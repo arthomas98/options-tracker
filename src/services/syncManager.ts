@@ -1,6 +1,20 @@
 // Sync Manager
 // Handles synchronization between localStorage and Google Sheets
 
+// Debug logging - set to true to see sync operations in console
+const DEBUG_SYNC = true;
+
+function syncLog(message: string, data?: unknown): void {
+  if (DEBUG_SYNC) {
+    const timestamp = new Date().toISOString().split('T')[1].slice(0, 12);
+    if (data !== undefined) {
+      console.log(`[SYNC ${timestamp}] ${message}`, data);
+    } else {
+      console.log(`[SYNC ${timestamp}] ${message}`);
+    }
+  }
+}
+
 import type { AppData } from '../types';
 import { SYNC_CONFIG, STORAGE_KEYS } from '../config/google';
 import {
@@ -131,9 +145,11 @@ class SyncManager {
    * Initialize sync - find or create spreadsheet
    */
   async initialize(): Promise<SpreadsheetInfo> {
+    syncLog('Initializing sync...');
     try {
       this.setState({ status: 'syncing' });
       const spreadsheetInfo = await getOrCreateSpreadsheet();
+      syncLog('Sync initialized', { spreadsheetId: spreadsheetInfo.id });
       this.setState({
         status: 'idle',
         spreadsheetInfo,
@@ -159,9 +175,11 @@ class SyncManager {
   async loadFromSheets(): Promise<AppData | null> {
     const spreadsheetId = getStoredSpreadsheetId();
     if (!spreadsheetId) {
+      syncLog('loadFromSheets: No spreadsheet ID found');
       return null;
     }
 
+    syncLog('Loading data from Google Sheets...');
     try {
       this.setState({ status: 'syncing' });
 
@@ -169,6 +187,11 @@ class SyncManager {
       await this.checkRateLimit();
 
       const data = await readAppData(spreadsheetId);
+
+      const positionCount = data.services.reduce((sum, s) => sum + s.portfolio.positions.length, 0);
+      const tradeCount = data.services.reduce((sum, s) =>
+        sum + s.portfolio.positions.reduce((psum, p) => psum + p.trades.length, 0), 0);
+      syncLog('Loaded from Sheets', { services: data.services.length, positions: positionCount, trades: tradeCount });
 
       this.setState({
         status: 'idle',
@@ -195,10 +218,16 @@ class SyncManager {
    * Save data to Google Sheets with debouncing
    */
   scheduleSync(data: AppData): void {
+    const positionCount = data.services.reduce((sum, s) => sum + s.portfolio.positions.length, 0);
+    const tradeCount = data.services.reduce((sum, s) =>
+      sum + s.portfolio.positions.reduce((psum, p) => psum + p.trades.length, 0), 0);
+    syncLog('Scheduling sync (debounced)', { services: data.services.length, positions: positionCount, trades: tradeCount });
+
     this.pendingData = data;
 
     // Don't sync if offline
     if (!navigator.onLine) {
+      syncLog('Offline - queueing for later');
       this.offlineQueue.push(data);
       this.setState({
         status: 'offline',
@@ -214,10 +243,12 @@ class SyncManager {
 
     // Clear existing timer
     if (this.debounceTimer) {
+      syncLog('Resetting debounce timer');
       clearTimeout(this.debounceTimer);
     }
 
     // Set new debounce timer
+    syncLog(`Will sync in ${SYNC_CONFIG.debounceMs}ms...`);
     this.debounceTimer = setTimeout(() => {
       this.executeSync();
     }, SYNC_CONFIG.debounceMs);
@@ -227,14 +258,25 @@ class SyncManager {
    * Execute the actual sync to Google Sheets
    */
   private async executeSync(): Promise<void> {
-    if (this.isSyncing || !this.pendingData) {
+    if (this.isSyncing) {
+      syncLog('executeSync: Already syncing, skipping');
+      return;
+    }
+    if (!this.pendingData) {
+      syncLog('executeSync: No pending data, skipping');
       return;
     }
 
     const spreadsheetId = getStoredSpreadsheetId();
     if (!spreadsheetId) {
+      syncLog('executeSync: No spreadsheet ID, skipping');
       return;
     }
+
+    const positionCount = this.pendingData.services.reduce((sum, s) => sum + s.portfolio.positions.length, 0);
+    const tradeCount = this.pendingData.services.reduce((sum, s) =>
+      sum + s.portfolio.positions.reduce((psum, p) => psum + p.trades.length, 0), 0);
+    syncLog('Executing sync to Google Sheets...', { services: this.pendingData.services.length, positions: positionCount, trades: tradeCount });
 
     this.isSyncing = true;
     this.setState({ status: 'syncing' });
@@ -249,12 +291,15 @@ class SyncManager {
 
       if (remoteModified && localLastSync && remoteModified > localLastSync) {
         // Potential conflict - remote was modified since our last sync
+        syncLog('Conflict detected', { remoteModified, localLastSync });
         await this.handleConflict(spreadsheetId, this.pendingData, remoteModified);
       } else {
         // No conflict, write directly
+        syncLog('No conflict, writing to Sheets...');
         await writeAppData(spreadsheetId, this.pendingData);
       }
 
+      syncLog('Sync completed successfully');
       this.setState({
         status: 'idle',
         lastSyncTime: new Date(),
@@ -270,6 +315,7 @@ class SyncManager {
       if (isAuthError) {
         // Auth errors: don't retry, mark session as expired
         // Data is safe in localStorage, will sync when user signs back in
+        syncLog('Sync failed - auth error (session expired)', error);
         googleAuth.markSessionExpired();
         this.setState({
           status: 'idle',
@@ -278,6 +324,7 @@ class SyncManager {
         this.pendingData = null;
       } else {
         const message = error instanceof Error ? error.message : 'Sync failed';
+        syncLog('Sync failed - will retry', { error: message });
         this.setState({
           status: 'error',
           error: message,
@@ -335,6 +382,7 @@ class SyncManager {
    * Force immediate sync (skip debounce)
    */
   async forceSync(data: AppData): Promise<void> {
+    syncLog('Force sync requested (immediate, no debounce)');
     if (this.debounceTimer) {
       clearTimeout(this.debounceTimer);
       this.debounceTimer = null;
@@ -342,6 +390,13 @@ class SyncManager {
 
     this.pendingData = data;
     await this.executeSync();
+  }
+
+  /**
+   * Check if there are unsaved changes pending
+   */
+  hasPendingChanges(): boolean {
+    return this.pendingData !== null || this.state.status === 'pending' || this.debounceTimer !== null;
   }
 
   // ============================================================================
