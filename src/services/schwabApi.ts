@@ -62,7 +62,9 @@ export interface SchwabAccountPositions {
 
 function getStoredTokens(): TokenData | null {
   try {
-    const stored = localStorage.getItem(TOKEN_STORAGE_KEY);
+    // Use sessionStorage instead of localStorage for security
+    // Tokens are cleared when the browser tab closes, reducing XSS attack window
+    const stored = sessionStorage.getItem(TOKEN_STORAGE_KEY);
     if (stored) {
       return JSON.parse(stored);
     }
@@ -73,10 +75,13 @@ function getStoredTokens(): TokenData | null {
 }
 
 function storeTokens(tokens: TokenData): void {
-  localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify(tokens));
+  // Use sessionStorage - tokens cleared on tab close
+  sessionStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify(tokens));
 }
 
 function clearTokens(): void {
+  sessionStorage.removeItem(TOKEN_STORAGE_KEY);
+  // Also clear from localStorage in case old tokens exist there
   localStorage.removeItem(TOKEN_STORAGE_KEY);
 }
 
