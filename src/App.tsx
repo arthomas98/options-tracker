@@ -267,6 +267,29 @@ function App() {
     }
   }, [accountNicknames, schwabAccounts.length]);
 
+  // One-time migration: enable autoMarkToMarket for positions that have a mark and Schwab account
+  useEffect(() => {
+    let hasChanges = false;
+    const updatedServices = appData.services.map(service => {
+      const updatedPositions = service.portfolio.positions.map(pos => {
+        // If position has a mark value and Schwab account but no autoMarkToMarket setting
+        if (pos.isOpen && pos.markValue !== undefined && pos.schwabAccountId && pos.autoMarkToMarket === undefined) {
+          hasChanges = true;
+          return { ...pos, autoMarkToMarket: true };
+        }
+        return pos;
+      });
+      if (updatedPositions !== service.portfolio.positions) {
+        return { ...service, portfolio: { ...service.portfolio, positions: updatedPositions } };
+      }
+      return service;
+    });
+
+    if (hasChanges) {
+      setAppData(prev => ({ ...prev, services: updatedServices }));
+    }
+  }, []); // Run once on mount
+
   // Loading state
   if (isLoading || authLoading) {
     return (
