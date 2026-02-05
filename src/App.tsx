@@ -268,12 +268,16 @@ function App() {
   }, [accountNicknames, schwabAccounts.length]);
 
   // One-time migration: enable autoMarkToMarket for positions that have a Schwab account linked
+  // Uses localStorage flag to only run once ever
   useEffect(() => {
+    const migrationKey = 'autoMarkToMarket-migration-v1';
+    if (localStorage.getItem(migrationKey)) return; // Already ran
+
     let hasChanges = false;
     const updatedServices = appData.services.map(service => {
       const updatedPositions = service.portfolio.positions.map(pos => {
-        // If position is open, has Schwab account linked, but no autoMarkToMarket setting yet
-        if (pos.isOpen && pos.schwabAccountId && pos.autoMarkToMarket === undefined) {
+        // If position is open and has Schwab account linked, enable auto-update
+        if (pos.isOpen && pos.schwabAccountId && !pos.autoMarkToMarket) {
           hasChanges = true;
           return { ...pos, autoMarkToMarket: true };
         }
@@ -288,6 +292,9 @@ function App() {
     if (hasChanges) {
       setAppData(prev => ({ ...prev, services: updatedServices }));
     }
+
+    // Mark migration as complete
+    localStorage.setItem(migrationKey, 'true');
   }, []); // Run once on mount
 
   // Loading state
