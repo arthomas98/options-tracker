@@ -267,13 +267,13 @@ function App() {
     }
   }, [accountNicknames, schwabAccounts.length]);
 
-  // One-time migration: enable autoMarkToMarket for positions that have a mark and Schwab account
+  // One-time migration: enable autoMarkToMarket for positions that have a Schwab account linked
   useEffect(() => {
     let hasChanges = false;
     const updatedServices = appData.services.map(service => {
       const updatedPositions = service.portfolio.positions.map(pos => {
-        // If position has a mark value and Schwab account but no autoMarkToMarket setting
-        if (pos.isOpen && pos.markValue !== undefined && pos.schwabAccountId && pos.autoMarkToMarket === undefined) {
+        // If position is open, has Schwab account linked, but no autoMarkToMarket setting yet
+        if (pos.isOpen && pos.schwabAccountId && pos.autoMarkToMarket === undefined) {
           hasChanges = true;
           return { ...pos, autoMarkToMarket: true };
         }
