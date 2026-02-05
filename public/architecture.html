@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Options Tracker Architecture</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px 40px;
+      background: #f9fafb;
+    }
+    h1 {
+      color: #1a1a1a;
+      border-bottom: 3px solid #3b82f6;
+      padding-bottom: 10px;
+      margin-top: 40px;
+    }
+    h2 {
+      color: #1e40af;
+      margin-top: 40px;
+      padding-bottom: 5px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    h3 {
+      color: #374151;
+      margin-top: 25px;
+    }
+    p {
+      margin: 15px 0;
+    }
+    code {
+      background: #e5e7eb;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+      font-size: 0.9em;
+    }
+    pre {
+      background: #1f2937;
+      color: #e5e7eb;
+      padding: 16px 20px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 0.85em;
+      line-height: 1.5;
+    }
+    pre code {
+      background: none;
+      padding: 0;
+      color: inherit;
+    }
+    ul, ol {
+      padding-left: 25px;
+    }
+    li {
+      margin: 8px 0;
+    }
+    strong {
+      color: #1e40af;
+    }
+    hr {
+      border: none;
+      border-top: 2px solid #e5e7eb;
+      margin: 50px 0;
+    }
+    .section {
+      background: white;
+      padding: 25px 30px;
+      border-radius: 12px;
+      margin: 25px 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .optional-badge {
+      display: inline-block;
+      background: #fef3c7;
+      color: #92400e;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8em;
+      font-weight: 600;
+      margin-left: 10px;
+      vertical-align: middle;
+    }
+    .file-list {
+      background: #f3f4f6;
+      padding: 15px 20px;
+      border-radius: 8px;
+      font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+      font-size: 0.85em;
+    }
+    .file-list code {
+      background: none;
+    }
+    .note {
+      background: #eff6ff;
+      border-left: 4px solid #3b82f6;
+      padding: 15px 20px;
+      margin: 20px 0;
+      border-radius: 0 8px 8px 0;
+    }
+    .warning {
+      background: #fef3c7;
+      border-left: 4px solid #f59e0b;
+      padding: 15px 20px;
+      margin: 20px 0;
+      border-radius: 0 8px 8px 0;
+    }
+    a {
+      color: #2563eb;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    .toc {
+      background: white;
+      padding: 20px 30px;
+      border-radius: 12px;
+      margin: 25px 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .toc h2 {
+      margin-top: 0;
+      border: none;
+    }
+    .toc ul {
+      list-style: none;
+      padding-left: 0;
+    }
+    .toc li {
+      margin: 10px 0;
+    }
+    .toc a {
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <h1>Options Tracker Architecture</h1>
+  <p>This document describes the architectural patterns used in this application, intended as a reference for building similar applications.</p>
+
+  <div class="toc">
+    <h2>Contents</h2>
+    <ul>
+      <li><a href="#tech-stack">Tech Stack</a></li>
+      <li><a href="#project-structure">Project Structure</a></li>
+      <li><a href="#core-patterns">Core Architectural Patterns</a></li>
+      <li><a href="#configuration">Configuration</a></li>
+      <li><a href="#schwab">Schwab Integration (Optional)</a></li>
+    </ul>
+  </div>
+
+  <div class="section" id="tech-stack">
+    <h2>Tech Stack</h2>
+    <ul>
+      <li><strong>Frontend:</strong> React 18 with TypeScript</li>
+      <li><strong>Build Tool:</strong> Vite</li>
+      <li><strong>Styling:</strong> Tailwind CSS</li>
+      <li><strong>Hosting:</strong> Vercel (with serverless functions)</li>
+      <li><strong>Cloud Storage:</strong> Google Sheets API</li>
+      <li><strong>Authentication:</strong> Google OAuth 2.0</li>
+    </ul>
+  </div>
+
+  <div class="section" id="project-structure">
+    <h2>Project Structure</h2>
+    <div class="file-list">
+<pre>src/
+├── components/          # Reusable UI components
+├── contexts/            # React contexts for state management
+│   ├── AuthContext.tsx      # Google OAuth state
+│   └── StorageContext.tsx   # Data persistence & sync
+├── services/            # External API integrations
+│   ├── googleAuth.ts        # Google OAuth service
+│   ├── googleSheets.ts      # Google Sheets API
+│   ├── sheetsDataMapper.ts  # Data transformation for Sheets
+│   └── syncManager.ts       # Sync state machine
+├── utils/               # Utility functions
+│   ├── storage.ts           # Local storage operations
+│   └── tradeParser.ts       # Domain-specific parsing
+├── types/               # TypeScript type definitions
+├── config/              # Configuration files
+│   └── google.ts            # Google API config
+├── App.tsx              # Main application component
+└── main.tsx             # Entry point
+
+public/                  # Static files
+api/                     # Vercel serverless functions</pre>
+    </div>
+  </div>
+
+  <div class="section" id="core-patterns">
+    <h2>Core Architectural Patterns</h2>
+
+    <h3>1. Offline-First Data Storage</h3>
+    <p>Data is always saved to localStorage first, then synced to cloud storage. This ensures the app works offline and feels fast.</p>
+    <pre><code>// Storage flow:
+// 1. User action → update state
+// 2. State change → save to localStorage
+// 3. Sync manager → push to Google Sheets (debounced)</code></pre>
+    <p><strong>Key files:</strong></p>
+    <ul>
+      <li><code>src/utils/storage.ts</code> - localStorage operations, data rehydration</li>
+      <li><code>src/contexts/StorageContext.tsx</code> - React context wrapping storage</li>
+    </ul>
+
+    <h3>2. Context-Based State Management</h3>
+    <p>Uses React Context for global state instead of external libraries (Redux, Zustand). Each domain has its own context:</p>
+    <pre><code>// AuthContext - authentication state
+const { isSignedIn, signIn, signOut } = useAuth();
+
+// StorageContext - app data and sync state
+const { appData, updateAppData, syncStatus } = useStorage();</code></pre>
+    <p><strong>Pattern:</strong></p>
+    <ul>
+      <li>Context provides state and actions</li>
+      <li>Provider wraps the app in <code>main.tsx</code></li>
+      <li>Custom hook (<code>useAuth</code>, <code>useStorage</code>) for consuming</li>
+    </ul>
+
+    <h3>3. Google Sheets as Database</h3>
+    <p>Uses Google Sheets API as a simple cloud database. Benefits:</p>
+    <ul>
+      <li>Free storage</li>
+      <li>User owns their data</li>
+      <li>Easy to inspect/edit manually</li>
+      <li>No backend needed</li>
+    </ul>
+    <p><strong>Structure:</strong></p>
+    <ul>
+      <li>One spreadsheet per user (stored in their Google Drive)</li>
+      <li>Multiple sheets (tabs) for different data types</li>
+      <li>Row-based storage with headers</li>
+    </ul>
+    <p><strong>Key files:</strong></p>
+    <ul>
+      <li><code>src/services/googleSheets.ts</code> - CRUD operations</li>
+      <li><code>src/services/sheetsDataMapper.ts</code> - Transform app data ↔ sheet rows</li>
+      <li><code>src/config/google.ts</code> - Sheet names, headers, schema version</li>
+    </ul>
+    <p><strong>Data Mapper Pattern:</strong></p>
+    <pre><code>// App data → Sheet rows (for saving)
+export function appDataToSheetRows(appData: AppData): SheetData
+
+// Sheet rows → App data (for loading)
+export function sheetRowsToAppData(rows: SheetData): AppData</code></pre>
+
+    <h3>4. Google OAuth Authentication</h3>
+    <p>Uses Google Identity Services (GIS) for authentication and authorization.</p>
+    <p><strong>Key files:</strong></p>
+    <ul>
+      <li><code>src/services/googleAuth.ts</code> - OAuth service singleton</li>
+      <li><code>src/contexts/AuthContext.tsx</code> - React context wrapper</li>
+    </ul>
+    <p><strong>Flow:</strong></p>
+    <ol>
+      <li>User clicks "Sign in with Google"</li>
+      <li>Google OAuth popup → user grants permission</li>
+      <li>Receive access token</li>
+      <li>Token stored in memory (auto-refreshes)</li>
+      <li>Token used for Sheets API calls</li>
+    </ol>
+    <p><strong>Scopes:</strong></p>
+    <pre><code>const SCOPES = [
+  'https://www.googleapis.com/auth/drive.file',      // Create/edit files we create
+  'https://www.googleapis.com/auth/spreadsheets',    // Read/write spreadsheets
+];</code></pre>
+
+    <h3>5. Sync State Machine</h3>
+    <p>Manages synchronization between local and cloud data with conflict detection.</p>
+    <p><strong>States:</strong></p>
+    <ul>
+      <li><code>idle</code> - No sync needed</li>
+      <li><code>syncing</code> - Sync in progress</li>
+      <li><code>synced</code> - Successfully synced</li>
+      <li><code>error</code> - Sync failed</li>
+      <li><code>conflict</code> - Local and cloud data differ</li>
+    </ul>
+    <p><strong>Key files:</strong></p>
+    <ul>
+      <li><code>src/services/syncManager.ts</code> - Sync logic and state machine</li>
+      <li><code>src/components/SyncStatusIndicator.tsx</code> - UI feedback</li>
+    </ul>
+    <div class="note">
+      <strong>Debouncing:</strong> Changes are debounced (e.g., 2 seconds) before syncing to avoid excessive API calls.
+    </div>
+
+    <h3>6. Data Rehydration</h3>
+    <p>When loading from storage (localStorage or Sheets), dates are stored as ISO strings and must be converted back to Date objects.</p>
+    <pre><code>function rehydratePortfolio(data: Portfolio): Portfolio {
+  return {
+    ...data,
+    positions: data.positions.map(pos => ({
+      ...pos,
+      openDate: new Date(pos.openDate),
+      closeDate: pos.closeDate ? new Date(pos.closeDate) : undefined,
+      // ... other date fields
+    })),
+  };
+}</code></pre>
+
+    <h3>7. Vercel Serverless Functions</h3>
+    <p>Used for operations that need server-side secrets (API keys, client secrets).</p>
+    <p><strong>Location:</strong> <code>api/</code> directory</p>
+    <pre><code>// api/example-token.ts
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  const clientSecret = process.env.CLIENT_SECRET; // Server-side only
+  // ... exchange tokens
+}</code></pre>
+  </div>
+
+  <div class="section" id="configuration">
+    <h2>Configuration</h2>
+
+    <h3>Environment Variables</h3>
+    <p><strong>Client-side (Vite):</strong></p>
+    <pre><code>VITE_GOOGLE_CLIENT_ID=your-client-id
+VITE_GOOGLE_API_KEY=your-api-key</code></pre>
+    <p><strong>Server-side (Vercel):</strong></p>
+    <pre><code>CLIENT_SECRET=your-secret</code></pre>
+
+    <h3>Google Cloud Console Setup</h3>
+    <ol>
+      <li>Create project at console.cloud.google.com</li>
+      <li>Enable APIs: Google Sheets API, Google Drive API</li>
+      <li>Create OAuth 2.0 credentials</li>
+      <li>Configure consent screen</li>
+      <li>Add authorized JavaScript origins and redirect URIs</li>
+    </ol>
+
+    <h3>Type Definitions</h3>
+    <p>Keep types in <code>src/types/</code> with clear interfaces for all data structures:</p>
+    <pre><code>export interface AppData {
+  services: Service[];
+  appTitle?: string;
+  // ... other top-level fields
+}
+
+export interface Service {
+  id: string;
+  name: string;
+  portfolio: Portfolio;
+  createdAt: Date;
+}</code></pre>
+  </div>
+
+  <hr>
+
+  <div class="section" id="schwab">
+    <h2>Schwab Integration <span class="optional-badge">Optional Module</span></h2>
+    <p>This section describes the Schwab brokerage integration, which is <strong>optional</strong> and can be excluded from new projects.</p>
+
+    <h3>Overview</h3>
+    <p>Integrates with Schwab's Trader API to fetch account data and positions. Uses OAuth 2.0 for authentication.</p>
+
+    <h3>Files</h3>
+    <div class="file-list">
+<pre>src/
+├── contexts/
+│   └── SchwabContext.tsx    # Schwab state management
+├── services/
+│   └── schwabApi.ts         # Schwab API service
+api/
+└── schwab-token.ts          # Token exchange serverless function</pre>
+    </div>
+
+    <h3>OAuth Flow</h3>
+    <ol>
+      <li>User clicks "Connect to Schwab"</li>
+      <li>Redirect to Schwab authorization page</li>
+      <li>User logs in and grants permission</li>
+      <li>Schwab redirects back with authorization code</li>
+      <li>Code exchanged for tokens via serverless function</li>
+      <li>Tokens stored in localStorage</li>
+    </ol>
+    <div class="warning">
+      <strong>Important:</strong> Redirect URI must exactly match what's registered in Schwab developer portal (watch for www vs non-www).
+    </div>
+
+    <h3>Token Management</h3>
+    <pre><code>interface TokenData {
+  access_token: string;
+  refresh_token: string;
+  expires_at: number;
+}</code></pre>
+    <ul>
+      <li>Tokens stored in localStorage</li>
+      <li>Auto-refresh before expiration</li>
+      <li>Token exchange happens server-side (to protect client secret)</li>
+    </ul>
+
+    <h3>Auto-Refresh</h3>
+    <p>Positions automatically refresh every 5 minutes when:</p>
+    <ul>
+      <li>User is signed in</li>
+      <li>Tab is visible (uses <code>document.visibilityState</code>)</li>
+    </ul>
+    <p>Also refreshes when tab becomes visible if &gt;5 minutes since last refresh.</p>
+
+    <h3>Position Matching</h3>
+    <p>Matches app positions to Schwab positions by:</p>
+    <ul>
+      <li>Symbol (with normalization, e.g., SPXW → SPX)</li>
+      <li>Expiration date</li>
+      <li>Strike price</li>
+      <li>Option type (CALL/PUT)</li>
+      <li>Quantity sign (+/-)</li>
+    </ul>
+
+    <h3>Context API</h3>
+    <pre><code>const {
+  isEnabled,
+  isSignedIn,
+  accounts,
+  refreshAllPositions,
+  getNetLiqForPosition,
+  lastRefresh,
+} = useSchwab();</code></pre>
+
+    <h3>Environment Variables</h3>
+    <pre><code>VITE_SCHWAB_CLIENT_ID=your-schwab-app-key
+SCHWAB_CLIENT_SECRET=your-schwab-secret  # Server-side only</code></pre>
+
+    <h3>Schwab Developer Portal Setup</h3>
+    <ol>
+      <li>Register at developer.schwab.com</li>
+      <li>Create an app</li>
+      <li>Set callback URL (must match exactly, including www or non-www)</li>
+      <li>Note the App Key (client ID) and Secret</li>
+    </ol>
+
+    <h3>Removing Schwab Integration</h3>
+    <p>To use this architecture without Schwab:</p>
+    <ol>
+      <li>Delete <code>src/contexts/SchwabContext.tsx</code></li>
+      <li>Delete <code>src/services/schwabApi.ts</code></li>
+      <li>Delete <code>api/schwab-token.ts</code></li>
+      <li>Remove <code>SchwabProvider</code> from <code>main.tsx</code></li>
+      <li>Remove Schwab-related fields from types (<code>schwabAccountId</code>, <code>autoMarkToMarket</code>)</li>
+      <li>Remove Schwab-related UI components and hooks</li>
+      <li>Remove Schwab environment variables</li>
+    </ol>
+  </div>
+
+  <div style="text-align: center; margin-top: 50px; padding: 20px; color: #6b7280; font-size: 0.9em;">
+    <p>Options Tracker v1.15</p>
+  </div>
+</body>
+</html>
