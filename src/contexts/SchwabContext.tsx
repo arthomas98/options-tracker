@@ -66,6 +66,7 @@ export function SchwabProvider({ children }: { children: ReactNode }) {
       // Check if this is a Schwab OAuth callback
       if (url.pathname === '/auth/schwab/callback') {
         const code = url.searchParams.get('code');
+        const state = url.searchParams.get('state');
         const error = url.searchParams.get('error');
         const errorDescription = url.searchParams.get('error_description');
 
@@ -75,6 +76,14 @@ export function SchwabProvider({ children }: { children: ReactNode }) {
         if (error) {
           console.error('Schwab OAuth error:', error, errorDescription);
           setAuthError(errorDescription || error);
+          setIsLoading(false);
+          return;
+        }
+
+        // Validate state parameter to prevent CSRF attacks
+        if (!schwabApi.validateOAuthState(state)) {
+          console.error('Schwab OAuth security error: state validation failed');
+          setAuthError('Security validation failed. Please try signing in again.');
           setIsLoading(false);
           return;
         }

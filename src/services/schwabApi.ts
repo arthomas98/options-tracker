@@ -20,6 +20,7 @@ const TOKEN_PROXY_URL = '/api/schwab-token';
 
 // Storage keys
 const TOKEN_STORAGE_KEY = 'schwab-tokens';
+const OAUTH_STATE_KEY = 'schwab-oauth-state';
 
 // ============================================================================
 // Types
@@ -97,19 +98,50 @@ export function isAuthenticated(): boolean {
   return tokens !== null && !isTokenExpired(tokens);
 }
 
+// Generate a cryptographically random state value for CSRF protection
+function generateOAuthState(): string {
+  const array = new Uint8Array(32);
+  crypto.getRandomValues(array);
+  return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
 export async function signIn(): Promise<void> {
   if (!isConfigured()) {
     throw new Error('Schwab API is not configured. Set VITE_SCHWAB_CLIENT_ID environment variable.');
   }
 
-  // Build authorization URL (simple OAuth without PKCE)
+  // Generate and store state for CSRF protection
+  const state = generateOAuthState();
+  sessionStorage.setItem(OAUTH_STATE_KEY, state);
+
+  // Build authorization URL with state parameter
   const params = new URLSearchParams({
     client_id: SCHWAB_CLIENT_ID,
     redirect_uri: REDIRECT_URI,
+    state: state,
   });
 
   // Redirect to Schwab authorization page
   window.location.href = `${SCHWAB_AUTH_URL}?${params.toString()}`;
+}
+
+// Validate the OAuth state parameter to prevent CSRF attacks
+export function validateOAuthState(receivedState: string | null): boolean {
+  const storedState = sessionStorage.getItem(OAUTH_STATE_KEY);
+  // Clear the stored state regardless of result (one-time use)
+  sessionStorage.removeItem(OAUTH_STATE_KEY);
+
+  if (!storedState || !receivedState) {
+    console.error('OAuth state validation failed: missing state');
+    return false;
+  }
+
+  if (storedState !== receivedState) {
+    console.error('OAuth state validation failed: state mismatch');
+    return false;
+  }
+
+  return true;
 }
 
 export async function handleOAuthCallback(authCode: string): Promise<void> {
