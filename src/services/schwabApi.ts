@@ -21,7 +21,6 @@ const TOKEN_PROXY_URL = '/api/schwab-token';
 // Storage keys
 const TOKEN_STORAGE_KEY = 'schwab-tokens';
 const OAUTH_STATE_KEY = 'schwab-oauth-state';
-const PKCE_VERIFIER_KEY = 'schwab-pkce-verifier';
 
 // ============================================================================
 // Types
@@ -106,41 +105,6 @@ function generateOAuthState(): string {
   return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
-// ============================================================================
-// PKCE (Proof Key for Code Exchange) Implementation
-// ============================================================================
-
-// Generate a random code verifier (43-128 characters, URL-safe)
-function generateCodeVerifier(): string {
-  const array = new Uint8Array(32);
-  crypto.getRandomValues(array);
-  // Base64url encode without padding
-  return btoa(String.fromCharCode(...array))
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=/g, '');
-}
-
-// Generate code challenge from verifier using SHA-256
-async function generateCodeChallenge(verifier: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(verifier);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = new Uint8Array(hashBuffer);
-  // Base64url encode without padding
-  return btoa(String.fromCharCode(...hashArray))
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=/g, '');
-}
-
-// Get stored code verifier (one-time use, clears after retrieval)
-function getAndClearCodeVerifier(): string | null {
-  const verifier = sessionStorage.getItem(PKCE_VERIFIER_KEY);
-  sessionStorage.removeItem(PKCE_VERIFIER_KEY);
-  return verifier;
-}
-
 export async function signIn(): Promise<void> {
   if (!isConfigured()) {
     throw new Error('Schwab API is not configured. Set VITE_SCHWAB_CLIENT_ID environment variable.');
@@ -150,18 +114,11 @@ export async function signIn(): Promise<void> {
   const state = generateOAuthState();
   sessionStorage.setItem(OAUTH_STATE_KEY, state);
 
-  // Generate PKCE code verifier and challenge
-  const codeVerifier = generateCodeVerifier();
-  sessionStorage.setItem(PKCE_VERIFIER_KEY, codeVerifier);
-  const codeChallenge = await generateCodeChallenge(codeVerifier);
-
-  // Build authorization URL with state and PKCE parameters
+  // Build authorization URL with state parameter
   const params = new URLSearchParams({
     client_id: SCHWAB_CLIENT_ID,
     redirect_uri: REDIRECT_URI,
     state: state,
-    code_challenge: codeChallenge,
-    code_challenge_method: 'S256',
   });
 
   // Redirect to Schwab authorization page
@@ -188,12 +145,6 @@ export function validateOAuthState(receivedState: string | null): boolean {
 }
 
 export async function handleOAuthCallback(authCode: string): Promise<void> {
-  // Get the PKCE code verifier (one-time use)
-  const codeVerifier = getAndClearCodeVerifier();
-  if (!codeVerifier) {
-    throw new Error('PKCE code verifier not found. Please try signing in again.');
-  }
-
   // Exchange authorization code for tokens via our serverless function
   const response = await fetch(TOKEN_PROXY_URL, {
     method: 'POST',
@@ -204,7 +155,6 @@ export async function handleOAuthCallback(authCode: string): Promise<void> {
       grant_type: 'authorization_code',
       code: authCode,
       redirect_uri: REDIRECT_URI,
-      code_verifier: codeVerifier,
     }),
   });
 
