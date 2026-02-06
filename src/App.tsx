@@ -480,13 +480,13 @@ function SummaryPage({ appData, onSelectService, onCreateService, onDeleteServic
               <div className={`text-lg font-bold ${totalSummary.openPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {formatCurrency(totalSummary.openPnL)}
               </div>
-              <div className="text-xs text-gray-500">Cost</div>
+              <div className="text-xs text-gray-500">Open Cost</div>
             </div>
             <div className="text-center">
               <div className={`text-lg font-bold ${totalEffectiveValue >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {formatCurrency(totalEffectiveValue)}
               </div>
-              <div className="text-xs text-gray-500">Value</div>
+              <div className="text-xs text-gray-500">Open Value</div>
             </div>
             <div className="text-center">
               <div className={`text-lg font-bold ${totalCurrentPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -654,13 +654,13 @@ function SummaryPage({ appData, onSelectService, onCreateService, onDeleteServic
                         <div className={`font-semibold ${summary.openPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                           {formatCurrency(summary.openPnL)}
                         </div>
-                        <div className="text-gray-500">Cost</div>
+                        <div className="text-gray-500">Open Cost</div>
                       </div>
                       <div className="text-center flex-1">
                         <div className={`font-semibold ${effectiveValue >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                           {formatCurrency(effectiveValue)}
                         </div>
-                        <div className="text-gray-500">Value</div>
+                        <div className="text-gray-500">Open Value</div>
                       </div>
                       <div className="text-center flex-1">
                         <div className={`font-semibold ${currentPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -961,13 +961,13 @@ function ServiceDetailPage({ service, appData, onBack, onUpdatePortfolio, onUpda
               <div className={`text-lg font-bold ${summary.openPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {formatCurrency(summary.openPnL)}
               </div>
-              <div className="text-xs text-gray-500">Cost</div>
+              <div className="text-xs text-gray-500">Open Cost</div>
             </div>
             <div className="text-center">
               <div className={`text-lg font-bold ${effectiveValue >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {formatCurrency(effectiveValue)}
               </div>
-              <div className="text-xs text-gray-500">Value</div>
+              <div className="text-xs text-gray-500">Open Value</div>
             </div>
             <div className="text-center">
               <div className={`text-lg font-bold ${currentPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
