@@ -492,7 +492,7 @@ function SummaryPage({ appData, onSelectService, onCreateService, onDeleteServic
               <div className={`text-lg font-bold ${totalCurrentPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {formatCurrency(totalCurrentPnL)}
               </div>
-              <div className="text-xs text-gray-500">Current P&L</div>
+              <div className="text-xs text-gray-500">Open P&L</div>
             </div>
             <ClosedPnLDisplay
               closedPnL={totalClosedPnL}
@@ -666,7 +666,7 @@ function SummaryPage({ appData, onSelectService, onCreateService, onDeleteServic
                         <div className={`font-semibold ${currentPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                           {formatCurrency(currentPnL)}
                         </div>
-                        <div className="text-gray-500">Current</div>
+                        <div className="text-gray-500">Open P&L</div>
                       </div>
                       <div className="flex-1">
                         <ClosedPnLDisplay
@@ -973,7 +973,7 @@ function ServiceDetailPage({ service, appData, onBack, onUpdatePortfolio, onUpda
               <div className={`text-lg font-bold ${currentPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {formatCurrency(currentPnL)}
               </div>
-              <div className="text-xs text-gray-500">Current P&L</div>
+              <div className="text-xs text-gray-500">Open P&L</div>
             </div>
             <div
               className="text-center cursor-pointer hover:bg-gray-50 rounded p-1 -m-1"
