@@ -755,6 +755,7 @@ function ServiceDetailPage({ service, appData, onBack, onUpdatePortfolio, onUpda
   const [showClosedStats, setShowClosedStats] = useState(false);
   const [showTradeHistory, setShowTradeHistory] = useState(false);
   const [showTradeHelp, setShowTradeHelp] = useState(false);
+  const [showPnLChart, setShowPnLChart] = useState(false);
 
   // Sync portfolio changes back to parent
   useEffect(() => {
@@ -1024,6 +1025,22 @@ function ServiceDetailPage({ service, appData, onBack, onUpdatePortfolio, onUpda
                   </div>
                 </div>
               )}
+            </div>
+          )}
+        </div>
+
+        {/* P&L Chart - Collapsible */}
+        <div className="mb-4">
+          <button
+            onClick={() => setShowPnLChart(!showPnLChart)}
+            className="w-full flex items-center justify-between px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+          >
+            <span className="text-sm font-medium text-gray-700">Closed P&L Chart</span>
+            <span className="text-gray-500">{showPnLChart ? '▼' : '▶'}</span>
+          </button>
+          {showPnLChart && (
+            <div className="mt-2">
+              <PnLChart positions={portfolio.positions} />
             </div>
           )}
         </div>
