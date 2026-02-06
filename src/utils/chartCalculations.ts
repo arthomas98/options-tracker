@@ -356,20 +356,34 @@ export function getPnLByWeek(
   });
 }
 
-// Get trade statistics for a period (count, total P&L, average P&L)
+// Get trade statistics for a period (count, total P&L, average P&L, average days in trade)
 export function getTradeStats(
   positions: Position[],
   period: ChartPeriod
-): { count: number; totalPnL: number; avgPnL: number } {
-  const closedPnLs = getClosedPositionPnLs(positions);
+): { count: number; totalPnL: number; avgPnL: number; avgDIT: number } {
   const { start, end } = getDateRangeForPeriod(period);
-  const filteredPnLs = filterByDateRange(closedPnLs, start, end);
 
-  const count = filteredPnLs.length;
-  const totalPnL = filteredPnLs.reduce((sum, p) => sum + p.pnl, 0);
+  // Filter closed positions by close date within period
+  const closedInPeriod = positions.filter(
+    (p) => !p.isOpen && p.closeDate && p.closeDate >= start && p.closeDate <= end
+  );
+
+  const count = closedInPeriod.length;
+  const totalPnL = closedInPeriod.reduce((sum, p) => sum + calculatePositionPnL(p), 0);
   const avgPnL = count > 0 ? totalPnL / count : 0;
 
-  return { count, totalPnL, avgPnL };
+  // Calculate average days in trade
+  let totalDays = 0;
+  for (const pos of closedInPeriod) {
+    if (pos.openDate && pos.closeDate) {
+      const msPerDay = 1000 * 60 * 60 * 24;
+      const days = Math.round((pos.closeDate.getTime() - pos.openDate.getTime()) / msPerDay);
+      totalDays += Math.max(0, days); // Ensure non-negative
+    }
+  }
+  const avgDIT = count > 0 ? totalDays / count : 0;
+
+  return { count, totalPnL, avgPnL, avgDIT };
 }
 
 // Main function to get chart data based on type, period, and segment

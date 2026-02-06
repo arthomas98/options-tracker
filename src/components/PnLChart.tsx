@@ -221,6 +221,10 @@ export function PnLChart({ positions }: PnLChartProps) {
               Trade Avg: <span className={tradeStats.avgPnL >= 0 ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
                 {formatCurrency(tradeStats.avgPnL)}
               </span>
+              <span className="text-gray-400 mx-2">|</span>
+              Avg DIT: <span className="text-gray-700 font-medium">
+                {tradeStats.avgDIT.toFixed(1)}
+              </span>
               <span className="text-gray-400 ml-1">({tradeStats.count} trades)</span>
             </span>
           )}
