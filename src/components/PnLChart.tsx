@@ -16,7 +16,7 @@ import {
 } from 'chart.js';
 import { Line, Bar } from 'react-chartjs-2';
 import type { Position } from '../types/trade';
-import { getChartData, type ChartType, type ChartPeriod, type ChartSegment } from '../utils/chartCalculations';
+import { getChartData, getTradeStats, type ChartType, type ChartPeriod, type ChartSegment } from '../utils/chartCalculations';
 
 // Register Chart.js components
 ChartJS.register(
@@ -62,8 +62,18 @@ export function PnLChart({ positions }: PnLChartProps) {
     [positions, chartType, period, segment]
   );
 
+  const tradeStats = useMemo(
+    () => getTradeStats(positions, period),
+    [positions, period]
+  );
+
   // Check if there's any data to show
   const hasData = chartData.some((d) => d.value !== 0);
+
+  const formatCurrency = (value: number) => {
+    const prefix = value >= 0 ? '' : '-';
+    return `${prefix}$${Math.abs(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
 
   const labels = chartData.map((d) => d.label);
   const values = chartData.map((d) => d.value);
@@ -204,7 +214,17 @@ export function PnLChart({ positions }: PnLChartProps) {
   return (
     <div className="bg-white rounded-lg shadow p-4 mb-6">
       <div className="flex flex-wrap justify-between items-center gap-2 mb-4">
-        <h2 className="text-sm font-semibold text-gray-700">Closed P&L</h2>
+        <div className="flex items-center gap-4">
+          <h2 className="text-sm font-semibold text-gray-700">Closed P&L</h2>
+          {tradeStats.count > 0 && (
+            <span className="text-xs text-gray-500">
+              Trade Avg: <span className={tradeStats.avgPnL >= 0 ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
+                {formatCurrency(tradeStats.avgPnL)}
+              </span>
+              <span className="text-gray-400 ml-1">({tradeStats.count} trades)</span>
+            </span>
+          )}
+        </div>
 
         <div className="flex gap-2 text-xs">
           {/* Chart Type Toggle */}

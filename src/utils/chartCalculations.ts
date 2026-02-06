@@ -356,6 +356,22 @@ export function getPnLByWeek(
   });
 }
 
+// Get trade statistics for a period (count, total P&L, average P&L)
+export function getTradeStats(
+  positions: Position[],
+  period: ChartPeriod
+): { count: number; totalPnL: number; avgPnL: number } {
+  const closedPnLs = getClosedPositionPnLs(positions);
+  const { start, end } = getDateRangeForPeriod(period);
+  const filteredPnLs = filterByDateRange(closedPnLs, start, end);
+
+  const count = filteredPnLs.length;
+  const totalPnL = filteredPnLs.reduce((sum, p) => sum + p.pnl, 0);
+  const avgPnL = count > 0 ? totalPnL / count : 0;
+
+  return { count, totalPnL, avgPnL };
+}
+
 // Main function to get chart data based on type, period, and segment
 export function getChartData(
   positions: Position[],
