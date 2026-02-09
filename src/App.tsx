@@ -284,12 +284,12 @@ function App() {
     }
   }, [accountNicknames, schwabAccounts.length]);
 
-  // One-time migration: enable autoMarkToMarket for positions that have a Schwab account linked
-  // Uses localStorage flag to only run once ever
+  // Auto-correction: ensure autoMarkToMarket is enabled for positions with Schwab account linked
+  // Runs on every data load to fix flags that may have been lost during sync
+  const autoMarkCorrectionInProgress = useRef(false);
   useEffect(() => {
-    const migrationKey = 'autoMarkToMarket-migration-v5'; // v5: re-run to fix missing flags
-    if (localStorage.getItem(migrationKey)) return; // Already ran
     if (appData.services.length === 0) return; // Wait for data to load
+    if (autoMarkCorrectionInProgress.current) return; // Prevent re-entry during our own update
 
     let hasChanges = false;
     const updatedServices = appData.services.map(service => {
@@ -308,19 +308,17 @@ function App() {
     });
 
     if (hasChanges) {
-      // Use immediate sync to ensure migration data is saved to cloud right away
-      console.log('[MIGRATION] Running autoMarkToMarket migration v5...');
+      // Use immediate sync to ensure corrected data is saved to cloud right away
+      console.log('[AUTO-MARK] Correcting missing autoMarkToMarket flags...');
+      autoMarkCorrectionInProgress.current = true;
       const updatedData = { ...appData, services: updatedServices };
       (async () => {
         await setAppDataImmediate(updatedData);
-        console.log('[MIGRATION] Migration v5 completed and synced');
-        localStorage.setItem(migrationKey, 'true');
+        console.log('[AUTO-MARK] Correction completed and synced');
+        autoMarkCorrectionInProgress.current = false;
       })();
-    } else {
-      // No changes needed, just mark as complete
-      localStorage.setItem(migrationKey, 'true');
     }
-  }, [appData.services, setAppDataImmediate]); // Re-run when services load
+  }, [appData.services, setAppDataImmediate]); // Re-run when services change (including after cloud sync)
 
   // Loading state
   if (isLoading || authLoading) {
