@@ -16,6 +16,7 @@ import {
   updatePositionTaxable,
   updatePositionSchwabAccount,
   updatePositionAutoMarkToMarket,
+  updatePositionNumber,
   addTradeHistoryEntry,
   getTradeHistoryForService,
   movePosition,
@@ -908,6 +909,20 @@ function ServiceDetailPage({ service, appData, onBack, onUpdatePortfolio, onUpda
     setPortfolio(updatePositionAutoMarkToMarket(portfolio, positionId, autoMarkToMarket));
   };
 
+  const handleUpdatePositionNumber = (oldPositionId: number, newPositionId: number) => {
+    try {
+      const updatedAppData = updatePositionNumber(appData, service.id, oldPositionId, newPositionId);
+      onUpdateAppData(updatedAppData);
+      // Update local portfolio state to reflect the change
+      const updatedService = updatedAppData.services.find((s) => s.id === service.id);
+      if (updatedService) {
+        setPortfolio(updatedService.portfolio);
+      }
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Failed to update position number');
+    }
+  };
+
   // Services available to move positions to (excluding current service)
   const otherServices = appData.services.filter((s) => s.id !== service.id);
 
@@ -1163,6 +1178,7 @@ function ServiceDetailPage({ service, appData, onBack, onUpdatePortfolio, onUpda
                 onUpdateTaxable={(isTaxable) => handleUpdateTaxable(position.id, isTaxable)}
                 onUpdateSchwabAccount={(schwabAccountId) => handleUpdateSchwabAccount(position.id, schwabAccountId)}
                 onUpdateAutoMarkToMarket={(autoMarkToMarket) => handleUpdateAutoMarkToMarket(position.id, autoMarkToMarket)}
+                onUpdatePositionNumber={(newId) => handleUpdatePositionNumber(position.id, newId)}
               />
             ))
           )}
@@ -1330,6 +1346,7 @@ interface PositionCardProps {
   onUpdateTaxable: (isTaxable: boolean) => void;
   onUpdateSchwabAccount: (schwabAccountId: string | undefined) => void;
   onUpdateAutoMarkToMarket: (autoMarkToMarket: boolean) => void;
+  onUpdatePositionNumber: (newId: number) => void;
 }
 
 // Helper to aggregate legs across all trades in a position
@@ -1390,12 +1407,15 @@ function PositionCard({
   onUpdateTaxable,
   onUpdateSchwabAccount,
   onUpdateAutoMarkToMarket,
+  onUpdatePositionNumber,
 }: PositionCardProps) {
   const summary = getPositionSummary(position);
   const markInfo = getMarkInfo(position);
   const netLegs = isExpanded ? getNetLegs(position) : [];
   const [isEditingMark, setIsEditingMark] = useState(false);
   const [markInputValue, setMarkInputValue] = useState('');
+  const [isEditingPositionNumber, setIsEditingPositionNumber] = useState(false);
+  const [positionNumberInput, setPositionNumberInput] = useState('');
   const [isClosing, setIsClosing] = useState(false);
   const [closeDateInput, setCloseDateInput] = useState('');
   const [isMoving, setIsMoving] = useState(false);
@@ -1428,7 +1448,46 @@ function PositionCard({
       >
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-bold text-gray-400">#{position.id}</span>
+            {isEditingPositionNumber ? (
+              <input
+                type="number"
+                value={positionNumberInput}
+                onChange={(e) => setPositionNumberInput(e.target.value)}
+                onBlur={() => {
+                  const newId = parseInt(positionNumberInput, 10);
+                  if (!isNaN(newId) && newId > 0 && newId !== position.id) {
+                    onUpdatePositionNumber(newId);
+                  }
+                  setIsEditingPositionNumber(false);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    const newId = parseInt(positionNumberInput, 10);
+                    if (!isNaN(newId) && newId > 0 && newId !== position.id) {
+                      onUpdatePositionNumber(newId);
+                    }
+                    setIsEditingPositionNumber(false);
+                  } else if (e.key === 'Escape') {
+                    setIsEditingPositionNumber(false);
+                  }
+                }}
+                onClick={(e) => e.stopPropagation()}
+                className="w-16 text-sm font-bold text-gray-600 bg-white border border-blue-500 rounded px-1 py-0.5 focus:outline-none"
+                autoFocus
+              />
+            ) : (
+              <span
+                className="text-sm font-bold text-gray-400 cursor-pointer hover:text-gray-600 hover:bg-gray-100 rounded px-1 -mx-1"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setPositionNumberInput(position.id.toString());
+                  setIsEditingPositionNumber(true);
+                }}
+                title="Click to edit position number"
+              >
+                #{position.id}
+              </span>
+            )}
             <span className="text-base font-bold">{position.symbol}</span>
             <span className="px-1.5 py-0.5 bg-gray-100 rounded text-xs text-gray-600">
               {position.structure}

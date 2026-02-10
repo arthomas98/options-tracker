@@ -447,6 +447,62 @@ export function updatePositionAutoMarkToMarket(
   return { ...portfolio, positions: updatedPositions };
 }
 
+export function updatePositionNumber(
+  appData: AppData,
+  serviceId: string,
+  oldPositionId: number,
+  newPositionId: number
+): AppData {
+  // Check if new ID already exists in this service
+  const service = appData.services.find((s) => s.id === serviceId);
+  if (!service) return appData;
+
+  if (service.portfolio.positions.some((p) => p.id === newPositionId)) {
+    throw new Error(`Position #${newPositionId} already exists in this service`);
+  }
+
+  // Update the position ID and all trades within it
+  const updatedServices = appData.services.map((s) => {
+    if (s.id !== serviceId) return s;
+
+    const updatedPositions = s.portfolio.positions.map((pos) => {
+      if (pos.id !== oldPositionId) return pos;
+      return {
+        ...pos,
+        id: newPositionId,
+        trades: pos.trades.map((t) => ({ ...t, positionId: newPositionId })),
+      };
+    });
+
+    // Update nextPositionId if necessary
+    const maxId = Math.max(...updatedPositions.map((p) => p.id));
+    const nextPositionId = Math.max(s.portfolio.nextPositionId, maxId + 1);
+
+    return {
+      ...s,
+      portfolio: {
+        ...s.portfolio,
+        positions: updatedPositions,
+        nextPositionId,
+      },
+    };
+  });
+
+  // Update trade history entries
+  const updatedTradeHistory = appData.tradeHistory?.map((entry) => {
+    if (entry.serviceId === serviceId && entry.positionId === oldPositionId) {
+      return { ...entry, positionId: newPositionId };
+    }
+    return entry;
+  });
+
+  return {
+    ...appData,
+    services: updatedServices,
+    tradeHistory: updatedTradeHistory,
+  };
+}
+
 export function rebuildTradeHistoryFromTrades(appData: AppData): AppData {
   const tradeHistory: TradeStringEntry[] = [];
 
