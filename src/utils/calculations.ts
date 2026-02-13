@@ -129,6 +129,8 @@ export interface ClosedPositionStats {
   count: number;
   winCount: number;
   lossCount: number;
+  avgWinPct: number;    // Average P&L % for winners
+  avgLossPct: number;   // Average P&L % for losers
   totalCost: number;
   totalPnL: number;
   avgCost: number;
@@ -152,6 +154,8 @@ export function calculateClosedPositionStats(positions: Position[], period: Time
       count: 0,
       winCount: 0,
       lossCount: 0,
+      avgWinPct: 0,
+      avgLossPct: 0,
       totalCost: 0,
       totalPnL: 0,
       avgCost: 0,
@@ -166,21 +170,28 @@ export function calculateClosedPositionStats(positions: Position[], period: Time
   let totalDaysHeld = 0;
   let winCount = 0;
   let lossCount = 0;
+  let totalWinPct = 0;
+  let totalLossPct = 0;
 
   for (const pos of closedPositions) {
     const pnl = calculatePositionPnL(pos);
-
-    // Count wins and losses
-    if (pnl >= 0) {
-      winCount++;
-    } else {
-      lossCount++;
-    }
 
     // Cost is the absolute value of the FIRST trade (initial premium paid or received)
     // This represents your initial capital at risk
     const firstTradePnL = pos.trades.length > 0 ? calculateTradePnL(pos.trades[0]) : 0;
     const cost = Math.abs(firstTradePnL);
+
+    // Calculate P&L percentage for this position
+    const pnlPct = cost > 0 ? (pnl / cost) * 100 : 0;
+
+    // Count wins and losses, and track their percentages
+    if (pnl >= 0) {
+      winCount++;
+      totalWinPct += pnlPct;
+    } else {
+      lossCount++;
+      totalLossPct += pnlPct;
+    }
 
     totalPnL += pnl;
     totalCost += cost;
@@ -209,6 +220,8 @@ export function calculateClosedPositionStats(positions: Position[], period: Time
     count,
     winCount,
     lossCount,
+    avgWinPct: winCount > 0 ? totalWinPct / winCount : 0,
+    avgLossPct: lossCount > 0 ? totalLossPct / lossCount : 0,
     totalCost,
     totalPnL,
     avgCost: totalCost / count,
