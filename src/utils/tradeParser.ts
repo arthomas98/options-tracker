@@ -64,6 +64,9 @@ export function parseThinkorswimTrade(input: string): Trade | null {
     let raw = input.trim();
     if (!raw) return null;
 
+    // Normalize BOT -> BUY, SOLD -> SELL (alternative formats)
+    raw = raw.replace(/\bBOT\b/gi, 'BUY').replace(/\bSOLD\b/gi, 'SELL');
+
     // Strip any text before BUY or SELL (e.g., "(Replacing #1005300447572) SELL...")
     const buyOrSellIndex = raw.search(/\b(BUY|SELL)\s+/i);
     if (buyOrSellIndex > 0) {
