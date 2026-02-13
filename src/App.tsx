@@ -2024,7 +2024,7 @@ function PositionCard({
                 </div>
 
                 {/* Legs - compact table */}
-                <div className="bg-gray-50 rounded p-1">
+                <div className="bg-gray-200 rounded p-1">
                   <table className="w-full text-xs">
                     <tbody>
                       {trade.legs.map((leg, legIdx) => (
