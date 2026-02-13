@@ -2008,6 +2008,9 @@ function PositionCard({
                     <span className="text-gray-600">{trade.spreadType}</span>
                   </div>
                   <div className="flex items-center gap-2">
+                    <span className="text-gray-500">
+                      {formatDate(trade.tradeDate)}
+                    </span>
                     <span className={`font-medium ${calculateTradePnL(trade) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                       {formatCurrency(calculateTradePnL(trade))}
                     </span>
