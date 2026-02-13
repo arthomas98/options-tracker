@@ -579,7 +579,7 @@ function SummaryPage({ appData, onSelectService, onCreateService, onDeleteServic
                 value={newServiceName}
                 onChange={(e) => setNewServiceName(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleAddService()}
-                placeholder="Service name (e.g., 'Alpha Picks', 'Options Profit')"
+                placeholder="Service name (e.g., 'OptionsGeek', 'Options Profit')"
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 autoFocus
               />
