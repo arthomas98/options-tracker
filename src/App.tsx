@@ -1446,6 +1446,7 @@ function PositionCard({
   const [positionNumberInput, setPositionNumberInput] = useState('');
   const [isClosing, setIsClosing] = useState(false);
   const [closeDateInput, setCloseDateInput] = useState('');
+  const [expiredAssigned, setExpiredAssigned] = useState(false);
   const [isMoving, setIsMoving] = useState(false);
   const [isEditingOpenDate, setIsEditingOpenDate] = useState(false);
   const [isEditingCloseDate, setIsEditingCloseDate] = useState(false);
@@ -1599,29 +1600,46 @@ function PositionCard({
           <div className="p-2 bg-gray-50 border-b flex gap-1 items-center flex-wrap">
             {position.isOpen ? (
               isClosing ? (
-                <div className="flex items-center gap-1">
-                  <label className="text-xs text-gray-600">Close Date:</label>
-                  <input
-                    type="date"
-                    value={closeDateInput}
-                    onChange={(e) => setCloseDateInput(e.target.value)}
-                    onClick={(e) => e.stopPropagation()}
-                    className="px-2 py-0.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  />
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex items-center gap-1">
+                    <label className="text-xs text-gray-600">Close Date:</label>
+                    <input
+                      type="date"
+                      value={closeDateInput}
+                      onChange={(e) => setCloseDateInput(e.target.value)}
+                      onClick={(e) => e.stopPropagation()}
+                      className="px-2 py-0.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                  <label className="flex items-center gap-1 text-xs text-gray-600 cursor-pointer" onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={expiredAssigned}
+                      onChange={(e) => setExpiredAssigned(e.target.checked)}
+                      onClick={(e) => e.stopPropagation()}
+                      className="rounded border-gray-300"
+                    />
+                    Expired/Assigned
+                  </label>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
+                      // If expired/assigned, set mark to 0 first
+                      if (expiredAssigned) {
+                        onUpdateMark(0);
+                      }
                       const closeDate = closeDateInput ? new Date(closeDateInput) : undefined;
                       onClose(closeDate);
                       setIsClosing(false);
                       setCloseDateInput('');
+                      setExpiredAssigned(false);
                     }}
                     className="px-2 py-0.5 text-xs bg-orange-600 text-white rounded hover:bg-orange-700"
                   >
                     Confirm
                   </button>
                   <button
-                    onClick={(e) => { e.stopPropagation(); setIsClosing(false); setCloseDateInput(''); }}
+                    onClick={(e) => { e.stopPropagation(); setIsClosing(false); setCloseDateInput(''); setExpiredAssigned(false); }}
                     className="px-2 py-0.5 text-xs bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
                   >
                     Cancel
