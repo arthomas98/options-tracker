@@ -1002,6 +1002,24 @@ function ServiceDetailPage({ service, appData, onBack, onUpdatePortfolio, onUpda
             </div>
           </div>
 
+          {/* Win/Loss Stats Row */}
+          {closedStats.count > 0 && (
+            <div className="mt-3 pt-3 border-t border-gray-200 flex justify-center gap-6 text-sm">
+              <div className="flex items-center gap-2">
+                <span className="text-gray-500">Won:</span>
+                <span className="font-semibold text-green-600">
+                  {closedStats.winCount} ({((closedStats.winCount / closedStats.count) * 100).toFixed(0)}%)
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-gray-500">Lost:</span>
+                <span className="font-semibold text-red-600">
+                  {closedStats.lossCount} ({((closedStats.lossCount / closedStats.count) * 100).toFixed(0)}%)
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* Expanded Closed Position Stats */}
           {showClosedStats && (
             <div className="mt-4 pt-4 border-t border-gray-200">

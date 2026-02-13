@@ -127,6 +127,8 @@ export function calculateCurrentPnLByTaxStatus(positions: Position[]): TaxablePn
 // Statistics for closed positions in a period
 export interface ClosedPositionStats {
   count: number;
+  winCount: number;
+  lossCount: number;
   totalCost: number;
   totalPnL: number;
   avgCost: number;
@@ -148,6 +150,8 @@ export function calculateClosedPositionStats(positions: Position[], period: Time
   if (closedPositions.length === 0) {
     return {
       count: 0,
+      winCount: 0,
+      lossCount: 0,
       totalCost: 0,
       totalPnL: 0,
       avgCost: 0,
@@ -160,9 +164,18 @@ export function calculateClosedPositionStats(positions: Position[], period: Time
   let totalCost = 0;
   let totalPnL = 0;
   let totalDaysHeld = 0;
+  let winCount = 0;
+  let lossCount = 0;
 
   for (const pos of closedPositions) {
     const pnl = calculatePositionPnL(pos);
+
+    // Count wins and losses
+    if (pnl >= 0) {
+      winCount++;
+    } else {
+      lossCount++;
+    }
 
     // Cost is the absolute value of the FIRST trade (initial premium paid or received)
     // This represents your initial capital at risk
@@ -194,6 +207,8 @@ export function calculateClosedPositionStats(positions: Position[], period: Time
 
   return {
     count,
+    winCount,
+    lossCount,
     totalCost,
     totalPnL,
     avgCost: totalCost / count,
