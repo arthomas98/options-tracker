@@ -1875,6 +1875,9 @@ function PositionCard({
                         <span className="text-xs">
                           P&L: <span className={`font-medium ${(markInfo.unrealizedPnL || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                             {formatCurrency(markInfo.unrealizedPnL || 0)}
+                            {markInfo.pnlPercentage !== null && (
+                              <span className="ml-1">({markInfo.pnlPercentage >= 0 ? '+' : ''}{markInfo.pnlPercentage.toFixed(1)}%)</span>
+                            )}
                           </span>
                         </span>
                       </>

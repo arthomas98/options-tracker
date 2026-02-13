@@ -319,6 +319,8 @@ export interface MarkInfo {
   markSource: MarkSource | null;
   unrealizedPnL: number | null;  // P&L if closed at mark
   isDebitPosition: boolean;      // Whether this is a debit (long) position
+  initialCost: number;           // Absolute value of first trade (initial investment)
+  pnlPercentage: number | null;  // P&L as percentage of initial investment
 }
 
 export function getMarkInfo(position: Position): MarkInfo {
@@ -330,12 +332,24 @@ export function getMarkInfo(position: Position): MarkInfo {
 
   const unrealizedPnL = calculateUnrealizedPnL(position);
 
+  // Initial cost is the absolute value of the first trade P&L
+  const firstTradePnL = position.trades.length > 0 ? calculateTradePnL(position.trades[0]) : 0;
+  const initialCost = Math.abs(firstTradePnL);
+
+  // Calculate P&L percentage based on initial investment
+  let pnlPercentage: number | null = null;
+  if (unrealizedPnL !== null && initialCost > 0) {
+    pnlPercentage = (unrealizedPnL / initialCost) * 100;
+  }
+
   return {
     markValue,
     markDate,
     markSource,
     unrealizedPnL,
     isDebitPosition,
+    initialCost,
+    pnlPercentage,
   };
 }
 
