@@ -1521,71 +1521,71 @@ function PositionCard({
               {position.structure}
             </span>
           </div>
-          <div className="flex items-center gap-3 text-xs">
+          <div className="flex items-center gap-2 text-xs flex-shrink-0">
             {/* P&L % for open positions with mark, or closed positions */}
             {((position.isOpen && markInfo.pnlPercentage !== null) || (!position.isOpen && markInfo.initialCost > 0)) && (
               <div className="text-right">
                 {position.isOpen ? (
                   // Open position: show unrealized P&L %
-                  <div className={`text-sm font-semibold ${(markInfo.pnlPercentage || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {(markInfo.pnlPercentage || 0) >= 0 ? '+' : ''}{(markInfo.pnlPercentage || 0).toFixed(1)}%
+                  <div className={`text-xs font-semibold ${(markInfo.pnlPercentage || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {(markInfo.pnlPercentage || 0) >= 0 ? '+' : ''}{(markInfo.pnlPercentage || 0).toFixed(0)}%
                   </div>
                 ) : (
                   // Closed position: show realized P&L %
                   (() => {
                     const closedPnlPct = (summary.runningPnL / markInfo.initialCost) * 100;
                     return (
-                      <div className={`text-sm font-semibold ${closedPnlPct >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {closedPnlPct >= 0 ? '+' : ''}{closedPnlPct.toFixed(1)}%
+                      <div className={`text-xs font-semibold ${closedPnlPct >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {closedPnlPct >= 0 ? '+' : ''}{closedPnlPct.toFixed(0)}%
                       </div>
                     );
                   })()
                 )}
-                <div className="text-gray-500">P&L %</div>
+                <div className="text-gray-500 text-[10px]">P&L%</div>
               </div>
             )}
             <div className="text-right">
-              <div className={`text-sm font-semibold ${summary.runningPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <div className={`text-xs font-semibold ${summary.runningPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {formatCurrency(summary.runningPnL)}
               </div>
-              <div className="text-gray-500">Cost</div>
+              <div className="text-gray-500 text-[10px]">Cost</div>
             </div>
             {position.isOpen && markInfo.markValue !== null && (
               <div className="text-right">
-                <div className={`text-sm font-semibold ${markInfo.markValue >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <div className={`text-xs font-semibold ${markInfo.markValue >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                   {formatCurrency(markInfo.markValue)}
                 </div>
-                <div className="text-gray-500">Value</div>
+                <div className="text-gray-500 text-[10px]">Value</div>
               </div>
             )}
             <div className="text-right">
-              <div className={`text-sm font-semibold ${summary.totalContracts >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <div className={`text-xs font-semibold ${summary.totalContracts >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {summary.totalContracts > 0 ? '+' : ''}{summary.totalContracts}
               </div>
-              <div className="text-gray-500">Ctrs</div>
+              <div className="text-gray-500 text-[10px]">Ctrs</div>
             </div>
             <div className="text-right">
               {position.isOpen ? (
                 <>
-                  <div className={`text-sm font-semibold ${summary.daysToExpiration <= 7 ? 'text-red-600' : 'text-gray-700'}`}>
+                  <div className={`text-xs font-semibold ${summary.daysToExpiration <= 7 ? 'text-red-600' : 'text-gray-700'}`}>
                     {summary.daysToExpiration}
                   </div>
-                  <div className="text-gray-500">DTE</div>
+                  <div className="text-gray-500 text-[10px]">DTE</div>
                 </>
               ) : (
                 <>
-                  <div className="text-sm font-semibold text-gray-700">
+                  <div className="text-xs font-semibold text-gray-700">
                     {position.openDate && position.closeDate
                       ? Math.ceil((position.closeDate.getTime() - position.openDate.getTime()) / (1000 * 60 * 60 * 24))
                       : '-'}
                   </div>
-                  <div className="text-gray-500">Held</div>
+                  <div className="text-gray-500 text-[10px]">Held</div>
                 </>
               )}
             </div>
             <div className="text-right">
-              <div className="text-sm font-semibold text-gray-700">{summary.adjustmentCount}</div>
-              <div className="text-gray-500">Adj</div>
+              <div className="text-xs font-semibold text-gray-700">{summary.adjustmentCount}</div>
+              <div className="text-gray-500 text-[10px]">Adj</div>
             </div>
             <span className="text-gray-400">{isExpanded ? '▲' : '▼'}</span>
           </div>
