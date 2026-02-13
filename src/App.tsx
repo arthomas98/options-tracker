@@ -1512,6 +1512,14 @@ function PositionCard({
             </span>
           </div>
           <div className="flex items-center gap-3 text-xs">
+            {position.isOpen && markInfo.pnlPercentage !== null && (
+              <div className="text-right">
+                <div className={`text-sm font-semibold ${markInfo.pnlPercentage >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {markInfo.pnlPercentage >= 0 ? '+' : ''}{markInfo.pnlPercentage.toFixed(1)}%
+                </div>
+                <div className="text-gray-500">P&L %</div>
+              </div>
+            )}
             <div className="text-right">
               <div className={`text-sm font-semibold ${summary.runningPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {formatCurrency(summary.runningPnL)}
