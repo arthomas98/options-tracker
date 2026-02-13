@@ -1512,11 +1512,25 @@ function PositionCard({
             </span>
           </div>
           <div className="flex items-center gap-3 text-xs">
-            {position.isOpen && markInfo.pnlPercentage !== null && (
+            {/* P&L % for open positions with mark, or closed positions */}
+            {((position.isOpen && markInfo.pnlPercentage !== null) || (!position.isOpen && markInfo.initialCost > 0)) && (
               <div className="text-right">
-                <div className={`text-sm font-semibold ${markInfo.pnlPercentage >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {markInfo.pnlPercentage >= 0 ? '+' : ''}{markInfo.pnlPercentage.toFixed(1)}%
-                </div>
+                {position.isOpen ? (
+                  // Open position: show unrealized P&L %
+                  <div className={`text-sm font-semibold ${(markInfo.pnlPercentage || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {(markInfo.pnlPercentage || 0) >= 0 ? '+' : ''}{(markInfo.pnlPercentage || 0).toFixed(1)}%
+                  </div>
+                ) : (
+                  // Closed position: show realized P&L %
+                  (() => {
+                    const closedPnlPct = (summary.runningPnL / markInfo.initialCost) * 100;
+                    return (
+                      <div className={`text-sm font-semibold ${closedPnlPct >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {closedPnlPct >= 0 ? '+' : ''}{closedPnlPct.toFixed(1)}%
+                      </div>
+                    );
+                  })()
+                )}
                 <div className="text-gray-500">P&L %</div>
               </div>
             )}
