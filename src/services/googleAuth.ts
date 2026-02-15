@@ -272,15 +272,9 @@ class GoogleAuthService {
       return;
     }
 
-    // Check if we might have a valid token (try silent first)
-    const storedExpiry = localStorage.getItem(STORAGE_KEYS.tokenExpiry);
-    if (storedExpiry && Date.now() < parseInt(storedExpiry, 10)) {
-      // Try silent refresh
-      this.tokenClient.requestAccessToken({ prompt: '' });
-    } else {
-      // Need user interaction
-      this.tokenClient.requestAccessToken({ prompt: 'consent' });
-    }
+    // Use empty prompt - Google will show account picker if needed,
+    // but won't force full consent screen if user has already granted permissions
+    this.tokenClient.requestAccessToken({ prompt: '' });
   }
 
   // Sign out
